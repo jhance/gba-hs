@@ -22,8 +22,10 @@ library
                      , Game.GBA.Thumb.Execution
                      , Game.GBA.Thumb.Instruction
                      , Game.GBA.Memory
+                     , Game.GBA.MemoryMap
                      , Game.GBA.Monad
                      , Game.GBA.Register
+                     , Game.GBA.RegisterSet
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8

@@ -14,6 +14,7 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Bits
 import           Game.GBA.Monad
+import           Game.GBA.Register
 
 -- | NZCVQ, in that order.
 data ConditionFlag = CFSign | CFZero | CFCarry | CFOverflow | CFStickyCarry
