@@ -29,6 +29,7 @@ library
                      , binary-literal-qq
                      , lens
                      , mtl
+                     , transformers
                      , transformers-base
                      , vector
   hs-source-dirs:      src
