@@ -18,10 +18,11 @@ cabal-version:       >=1.10
 library
   exposed-modules:     
                        Game.GBA.Boot
-                       Game.GBA.CPUFlag
-                       Game.GBA.Thumb.Execution
-                       Game.GBA.Thumb.Instruction
-                       Game.GBA.Monad
+                     , Game.GBA.CPUFlag
+                     , Game.GBA.Thumb.Execution
+                     , Game.GBA.Thumb.Instruction
+                     , Game.GBA.Memory
+                     , Game.GBA.Monad
                      , Game.GBA.Register
   -- other-modules:       
   -- other-extensions:    
