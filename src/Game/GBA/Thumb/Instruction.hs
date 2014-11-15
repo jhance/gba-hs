@@ -44,6 +44,24 @@ data TMCASOpcode = TMCASO_MOV
                  | TMCASO_SUB
                  deriving (Enum, Show, Read, Eq, Ord)
 
+-- | A whole bunch of ALU instructions.
+data TALUOpcode = TALU_AND
+                | TALU_EOR
+                | TALU_LSL
+                | TALU_LSR
+                | TALU_ASR
+                | TALU_ADC
+                | TALU_SBC
+                | TALU_ROR
+                | TALU_TST
+                | TALU_NEG
+                | TALU_CMP
+                | TALU_CMN
+                | TALU_ORR
+                | TALU_MUL
+                | TALU_BIC
+                | TALU_MVN
+                deriving (Enum, Show, Read, Eq, Ord)
 
 -- | Thumb instructions.
 -- This is an intermediate format - only used right before execution.
@@ -64,16 +82,16 @@ data TInstruction =
         TMCASOpcode -- ^ Opcode, one of MOV, CMP, ADD, SUB (2 bits)
         RegisterID -- ^ Destination register
         Word8 -- Unsigned immediate (8 bits)
+    | TALU
+        TALUOpcode -- ^ Opcode. Many options. (4 bits)
+        RegisterID -- ^ Source register
+        RegisterID -- ^ Destination register
     deriving (Show, Read, Eq, Ord)
 
 chop x t = shiftR (shiftL x t) t
 
 newtype Parser a = Parser (MaybeT (State (Int, Word16)) a)
-    deriving (Functor, Applicative, Monad, MonadPlus, MonadState (Int, Word16))
-
-instance Alternative Parser where 
-      empty = mzero
-      (<|>) = mplus
+    deriving (Functor, Applicative, Alternative, Monad, MonadPlus, MonadState (Int, Word16))
 
 -- | Backtracking.
 try :: Parser a -> Parser a
@@ -102,6 +120,7 @@ require k b = do
 choice :: [Parser a] -> Parser a
 choice = foldl (<|>) empty
 
+-- | Like @choice@, but with backtracking. More useful.
 choiceTry :: [Parser a] -> Parser a
 choiceTry = choice . map try
 
@@ -121,25 +140,37 @@ parse0 = do
     require 3 [b|000|] 
     opcode <- getBits 2
     guard $ opcode /= [b|11|]
+    let opcode' = toEnum opcode
     offset <- getBits 5
     source <- getBits 3
     dest <- getBits 3
-    return $ TSR (toEnum opcode) offset source dest
+    let offset' = if offset == 0 && (opcode' == TSRO_ASR || opcode' == TSRO_LSR)
+            then 32
+            else offset
+    return $ TSR opcode' offset' source dest
 
 parse1 :: Parser TInstruction
 parse1 = do
     require 5 [b|00011|]
-    isImmediate <- getBits 1
-    isSub <- getBits 1
+    isImmediate <- toEnum <$> getBits 1
+    isSub <- toEnum <$> getBits 1
     operand <- getBits 3
     source <- getBits 3
     dest <- getBits 3
-    return $ TAS (toEnum isImmediate) (toEnum isSub) operand source dest
+    return $ TAS isImmediate isSub operand source dest
 
 parse2 :: Parser TInstruction
 parse2 = do
     require 3 [b|001|]
-    opcode <- getBits 2
+    opcode <- toEnum <$> getBits 2
     dest <- getBits 3
     operand <- getBits 8
-    return $ TMCAS (toEnum opcode) dest operand
+    return $ TMCAS opcode dest operand
+
+parse3 :: Parser TInstruction
+parse3 = do
+    require 5 [b|10000|]
+    opcode <- toEnum <$> getBits 4
+    source <- getBits 3
+    dest <- getBits 3
+    return $ TALU opcode source dest

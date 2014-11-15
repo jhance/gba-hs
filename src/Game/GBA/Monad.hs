@@ -5,6 +5,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Game.GBA.Monad
     ( GBA
+    , makeGBAContext
+    , runGBA
     -- * General context lens operations
     , readLens
     , writeLens
@@ -90,5 +92,8 @@ writeRegister reg val = do
 newtype GBA s a = GBA (ReaderT (GBAContext s) (ST s) a)
     deriving (Functor, Applicative, Monad, MonadReader (GBAContext s),
               MonadBase (ST s))
+
+runGBA :: GBAContext s -> GBA s a -> ST s a
+runGBA context (GBA gba) = runReaderT gba context
 
 --type GBA s a = ReaderT (GBAContext s) (ST s) a

@@ -1,7 +1,7 @@
 module Main
 where
 
-import qualified Test.GBA.Thumb.Instruction as T1
+import qualified Test.GBA.Thumb as T1
 import           Test.Tasty
 
-main = defaultMain (testGroup "" [T1.tests])
+main = defaultMain (testGroup "testsuite" [T1.tests])

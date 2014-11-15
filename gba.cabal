@@ -17,6 +17,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     
+                       Game.GBA.Boot
                        Game.GBA.CPUFlag
                        Game.GBA.Thumb.Execution
                        Game.GBA.Thumb.Instruction
@@ -41,7 +42,9 @@ test-suite test
   hs-source-dirs:      test
   main-is:             Main.hs
   other-modules:       
-                       Test.GBA.Thumb.Instruction
+                       Test.GBA.Thumb
+                     , Test.GBA.Thumb.Execution
+                     , Test.GBA.Thumb.Instruction
   build-depends:       base
                      , binary-literal-qq
                      , gba

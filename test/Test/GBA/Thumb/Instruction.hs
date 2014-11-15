@@ -11,12 +11,15 @@ import           Test.HUnit
 import           Test.Tasty (TestTree, testGroup)
 import           Test.Tasty.HUnit (testCase)
 
-parseTests :: TestTree
-parseTests = testGroup "parser" $
+tests :: TestTree
+tests = testGroup "parser" $
     [ testGroup "shift register (t1)" $
         [ shiftReg1
         , shiftReg2
         , shiftReg3
+        , shiftReg4
+        , shiftReg5
+        , shiftReg6
         ]
     , testGroup "add/subtract (t2)"
         [ tas1
@@ -32,17 +35,10 @@ parseTests = testGroup "parser" $
         ]
     ]
 
--- | Eventually this will go in Test.GBA.Thumb
-tests :: TestTree
-tests = testGroup "thumb instructions" $
-            [
-            parseTests
-            ]
-
 --- t1
 ------
 shiftReg1 :: TestTree
-shiftReg1 = testCase "shift regester LSL" $ parseT [b|000 00 00101 010 111|]
+shiftReg1 = testCase "shift register LSL" $ parseT [b|000 00 00101 010 111|]
     @?= TSR TSRO_LSL [b|00101|] [b|010|] [b|111|]
 
 shiftReg2 :: TestTree
@@ -52,6 +48,18 @@ shiftReg2 = testCase "shift register LSR" $ parseT [b|000 01 11010 000 001|]
 shiftReg3 :: TestTree
 shiftReg3 = testCase "shift register ASR" $ parseT [b|000 10 11111 101 000|]
     @?= TSR TSRO_ASR [b|11111|] [b|101|] [b|000|]
+
+shiftReg4 :: TestTree
+shiftReg4 = testCase "shift register LSL 0 -> 0" $ parseT [b|000 00 00000 010 111|]
+    @?= TSR TSRO_LSL [b|00000|] [b|010|] [b|111|]
+
+shiftReg5 :: TestTree
+shiftReg5 = testCase "shift register LSR 0 -> 32" $ parseT [b|000 01 00000 000 001|]
+    @?= TSR TSRO_LSR [b|100000|] [b|000|] [b|001|]
+
+shiftReg6 :: TestTree
+shiftReg6 = testCase "shift register ASR 0 -> 32" $ parseT [b|000 10 00000 101 000|]
+    @?= TSR TSRO_ASR [b|100000|] [b|101|] [b|000|]
 
 --- t2
 ------
