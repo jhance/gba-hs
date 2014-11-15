@@ -12,7 +12,7 @@ module Game.GBA.Monad
     , register
     , writeRegister
     , readRegister
-    -- * Stuff that belongs in Game.GBA.CPUFlags
+    -- * Low-level stuff that is, unfortunately, required for the register primitives.
     , setCPSR
     , readCPSR
     , withCPSR
@@ -29,7 +29,6 @@ import           Control.Monad.ST
 import           Data.Bits
 import           Data.Word
 import           Data.STRef
-import           GHC.Generics
 
 import           Game.GBA.Register
 
@@ -38,6 +37,10 @@ data GBAContext s = GBAContext {
     }
 
 makeLenses ''GBAContext
+
+-- | Creates an empty context.
+makeGBAContext :: ST s (GBAContext s)
+makeGBAContext = GBAContext <$> makeRegisterSet
 
 register :: BankMode -> RegisterID -> Lens' (GBAContext s) (Register s)
 register bank reg = gbaRegisters . register' bank reg

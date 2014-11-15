@@ -17,6 +17,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     
+                       Game.GBA.CPUFlag
                        Game.GBA.Thumb.Execution
                        Game.GBA.Thumb.Instruction
                        Game.GBA.Monad

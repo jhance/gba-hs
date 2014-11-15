@@ -8,6 +8,7 @@ module Game.GBA.Register
     , RegisterSet
     , RegisterID
     , register'
+    , makeRegisterSet
 
     -- * Special registers
     , cpsr
@@ -24,6 +25,7 @@ module Game.GBA.Register
 
 where
 
+import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.Reader
 import           Control.Monad.ST
@@ -184,3 +186,18 @@ register' SupervisorMode 17 = registerSPSRsvc
 register' AbortMode 17 = registerSPSRabt
 register' IRQMode 17 = registerSPSRirq
 register' UndefinedMode 17 = registerSPSRund
+
+-- | Makes a register set, with every register initialized to zero.
+--
+-- This is the only way to create a register set. Normally this only
+-- needs to be done by boot process or test harnesses.
+makeRegisterSet :: ST s (RegisterSet s)
+makeRegisterSet = let k = newSTRef 0 in RegisterSet
+    <$> k <*> k <*> k <*> k <*> k -- 0
+    <*> k <*> k <*> k <*> k <*> k -- 5
+    <*> k <*> k <*> k <*> k <*> k -- 10
+    <*> k <*> k <*> k <*> k <*> k -- 15
+    <*> k <*> k <*> k <*> k <*> k -- 20
+    <*> k <*> k <*> k <*> k <*> k -- 25
+    <*> k <*> k <*> k <*> k <*> k -- 30
+    <*> k <*> k
