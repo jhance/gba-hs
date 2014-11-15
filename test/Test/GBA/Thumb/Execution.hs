@@ -333,6 +333,8 @@ tasAdd4 = testCase "tas add simple register, nonsigned overflow" $ do
     n @?= False
     v @?= False
 
+-- t2.2
+-------
 tasSub1 :: TestTree
 tasSub1 = testCase "tas sub simple register" $ do
     (dest, c, z, n, v) <- runTest $ do
