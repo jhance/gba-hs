@@ -5,6 +5,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Game.GBA.Monad
     ( GBA
+    , GBAContext
     , makeGBAContext
     , runGBA
     -- * General context lens operations

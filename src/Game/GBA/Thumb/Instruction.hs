@@ -26,7 +26,6 @@ import           Game.GBA.Register
 data TSROpcode = TSRO_LSL -- ^ Shift left
                | TSRO_LSR -- ^ Logical shift right
                | TSRO_ASR -- ^ Arithmetic shift right (preseves sign bit)
-                          -- if the opcode is 11, its actually a TAS (t2)
                deriving (Enum, Show, Read, Eq, Ord)
 
 data TASOperandType = TASO_REG
@@ -67,25 +66,25 @@ data TALUOpcode = TALU_AND
 -- This is an intermediate format - only used right before execution.
 -- For this reason, we aren't compact - we use @Int@ for register ids.
 data TInstruction =
-      TSR -- ^ Shift register. (t1)
-        TSROpcode -- ^ Opcode, one of LSL, LSR, ASR (2 bits)
-        Word8 -- ^ Offset (5 bits)
-        RegisterID -- ^ Source (3 bits)
-        RegisterID -- ^ Destination (3 bits)
-    | TAS -- ^ Add or subtract register into another. (t2)
+      TSR -- Shift register. (t1)
+        TSROpcode -- Opcode, one of LSL, LSR, ASR (2 bits)
+        Word8 -- Offset (5 bits)
+        RegisterID -- Source (3 bits)
+        RegisterID -- Destination (3 bits)
+    | TAS -- Add or subtract register into another. (t2)
         TASOperandType -- MSB of opcode (1 bit)
         TASOperation -- LSB of opcode (0 bit)
-        Word8 -- ^ Either a register ID or a number (3 bits)
-        RegisterID -- ^ Source register (3 bits)
-        RegisterID -- ^ Destination register (3 bits)
-    | TMCAS -- ^ Move, compare, add, or subtract. (t3)
-        TMCASOpcode -- ^ Opcode, one of MOV, CMP, ADD, SUB (2 bits)
-        RegisterID -- ^ Destination register
+        Word8 -- Either a register ID or a number (3 bits)
+        RegisterID -- Source register (3 bits)
+        RegisterID -- Destination register (3 bits)
+    | TMCAS -- Move, compare, add, or subtract. (t3)
+        TMCASOpcode -- Opcode, one of MOV, CMP, ADD, SUB (2 bits)
+        RegisterID -- Destination register
         Word8 -- Unsigned immediate (8 bits)
     | TALU
-        TALUOpcode -- ^ Opcode. Many options. (4 bits)
-        RegisterID -- ^ Source register
-        RegisterID -- ^ Destination register
+        TALUOpcode -- Opcode. Many options. (4 bits)
+        RegisterID -- Source register
+        RegisterID -- Destination register
     deriving (Show, Read, Eq, Ord)
 
 chop x t = shiftR (shiftL x t) t
@@ -126,8 +125,7 @@ choiceTry = choice . map try
 
 -- | Parses a 16-bit thumb instruction, but does not execute.
 --
--- In a perfect world, we could probably encapsulate this. But the parsing of
--- instructions is too important to not justify exporting in order to test.
+-- If it fails to parse, it will error. Really it should through an exception, though.
 parseT :: Word16 -> TInstruction
 parseT inst = fromMaybe (error "Failed to parse instruction") . runParser inst $ choiceTry
     [ parse0
