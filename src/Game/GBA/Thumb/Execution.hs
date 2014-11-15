@@ -23,11 +23,19 @@ executeT1 TSRO_LSL 0 src dest = do
     writeRegister dest val
     setSign val
     setZero val
+executeT1 _ 0 _ _ = error "invalid t1; should through exception!"
 executeT1 TSRO_LSL n src dest = do
     val <- readRegister src
     let val' = shiftL val (fromIntegral n)
-    writeRegister dest $ shiftL val (fromIntegral n)
-    setCondition CFCarry . toEnum . fromEnum $ testBit val 31
+    writeRegister dest val'
+    setCondition CFCarry $ testBit val 31
+    setZero val'
+    setSign val'
+executeT1 TSRO_LSR n src dest = do
+    val <- readRegister src
+    let val' = shiftR val (fromIntegral n)
+    writeRegister dest val'
+    setCondition CFCarry $ testBit val (fromIntegral n - 1)
     setZero val'
     setSign val'
 

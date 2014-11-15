@@ -39,7 +39,13 @@ tests = testGroup "execution"
           , shiftRegLSL7
           , shiftRegLSL8
           ]
-      , testGroup "lsr (t1.2)" []
+      , testGroup "lsr (t1.2)" $
+          [ shiftRegLSR1
+          , shiftRegLSR2
+          , shiftRegLSR3
+          , shiftRegLSR4
+          , shiftRegLSR5
+          ]
       , testGroup "asr (t1.3)" []
       ]
     ]
@@ -141,4 +147,62 @@ shiftRegLSL8 = testCase "shift register LSL by 8" $ do
     dest @?= 2^28
     c @?= False
     z @?= False
+    n @?= False
+
+-- t1.2
+-------
+-- invariant: n will always be false.
+shiftRegLSR1 :: TestTree
+shiftRegLSR1 = testCase "shift register RSL by 1" $ do
+    (dest, c, z, n) <- runTest $ do
+        writeRegister [b|010|] $ 2^20
+        execute (TSR TSRO_LSR 1 [b|010|] [b|001|])
+        getShiftResult [b|001|]
+    dest @?= 2^19
+    c @?= False
+    z @?= False
+    n @?= False
+
+shiftRegLSR2 :: TestTree
+shiftRegLSR2 = testCase "shift register RSL by 8" $ do
+    (dest, c, z, n) <- runTest $ do
+        writeRegister [b|010|] $ 2^20
+        execute (TSR TSRO_LSR 8 [b|010|] [b|001|])
+        getShiftResult [b|001|]
+    dest @?= 2^12
+    c @?= False
+    z @?= False
+    n @?= False
+
+shiftRegLSR3 :: TestTree
+shiftRegLSR3 = testCase "shift register RSL with carry" $ do
+    (dest, c, z, n) <- runTest $ do
+        writeRegister [b|000|] $ 2^20 + 2
+        execute (TSR TSRO_LSR 2 [b|000|] [b|001|])
+        getShiftResult [b|001|]
+    dest @?= 2^18
+    c @?= True
+    z @?= False
+    n @?= False
+
+shiftRegLSR4 :: TestTree
+shiftRegLSR4 = testCase "shift register RSL to zero" $ do
+    (dest, c, z, n) <- runTest $ do
+        writeRegister [b|000|] $ 2^20
+        execute (TSR TSRO_LSR 30 [b|000|] [b|001|])
+        getShiftResult [b|001|]
+    dest @?= 0
+    c @?= False
+    z @?= True
+    n @?= False
+
+shiftRegLSR5 :: TestTree
+shiftRegLSR5 = testCase "shift register RSL to zero with carry" $ do
+    (dest, c, z, n) <- runTest $ do
+        writeRegister [b|000|] $ 2^20
+        execute (TSR TSRO_LSR 21 [b|000|] [b|001|])
+        getShiftResult [b|001|]
+    dest @?= 0
+    c @?= True
+    z @?= True
     n @?= False
