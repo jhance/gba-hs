@@ -12,6 +12,8 @@ module Game.GBA.Memory.Real
     )
 where
 
+import           Debug.Trace
+
 import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.Base
@@ -31,16 +33,16 @@ writeReal8 addr val = do
 -- Uses little-endian.
 writeReal16 :: RealAddress -> Word16 -> GBA s ()
 writeReal16 (seg, off) val = do
-    writeReal8 (seg, off) . fromIntegral $ shiftL val 8
-    writeReal8 (seg, off+1) . fromIntegral $ shiftR val 8
+    writeReal8 (seg, off) . fromIntegral $ shiftR val 8
+    writeReal8 (seg, off+1) . fromIntegral $ shiftR (shiftL val 8) 8
 
 -- | Write to a real address. (in 32-bit mode)
 --
 -- Uses little-endian.
 writeReal32 :: RealAddress -> Word32 -> GBA s ()
 writeReal32 (seg, off) val = do
-    writeReal16 (seg, off) . fromIntegral $ shiftL val 8
-    writeReal16 (seg, off+2) . fromIntegral $ shiftR val 8
+    writeReal16 (seg, off) . fromIntegral $ shiftR val 16
+    writeReal16 (seg, off+2) . fromIntegral $ shiftR (shiftL val 16) 16
 
 -- | Read from a real address. (in 8-bit mode)
 readReal8 :: RealAddress -> GBA s Word8
