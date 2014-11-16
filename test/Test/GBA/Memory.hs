@@ -13,11 +13,15 @@ import           Game.GBA.CPUFlag
 import           Game.GBA.Memory
 import           Game.GBA.Monad
 
-import           Test.HUnit
+import           Test.HUnit hiding (assert)
 import           Test.Tasty (TestTree, testGroup)
 import           Test.Tasty.HUnit (testCase)
+import           Test.Tasty.QuickCheck (testProperty)
+import           Test.QuickCheck
+import           Test.QuickCheck.Monadic
 
-runTest :: (forall s. GBA s a) -> IO a
+--runTest :: forall a. (forall s. GBA s a) -> IO a
+runTest :: GBA RealWorld a -> IO a
 runTest gba = stToIO $ do
     context <- makeGBAContext
     runGBA context (bootForTest Thumb >> gba)
@@ -38,55 +42,63 @@ tests = testGroup "memory" $
         ]
     ]
 
--- most of these basic ones can probably be quickcheckified
 basic1 :: TestTree
-basic1 = testCase "write to on-board WRAM (8-bit)" $ do
-    contents <- runTest $ do
-        writeVirtual8 0x020000FF 5
+basic1 = testProperty "write to on-board WRAM (8-bit)" . monadicIO $ do
+    n <- pick arbitrary
+    contents <- run . runTest $ do
+        writeVirtual8 0x020000FF n
         readVirtual8 0x020000FF
-    contents @?= 5
+    assert $ contents == n
 
 basic2 :: TestTree
-basic2 = testCase "write to on-board WRAM (16-bit/small)" $ do
-    contents <- runTest $ do
-        writeVirtual16 0x02000100 5
+basic2 = testProperty "write to on-board WRAM (16-bit)" . monadicIO $ do
+    n <- pick arbitrary
+    contents <- run .runTest $ do
+        writeVirtual16 0x02000100 n
         readVirtual16 0x02000100
-    contents @?= 5
+    assert $ contents == n
 
 basic3 :: TestTree
-basic3 = testCase "write to on-board WRAM (16-bit/large)" $ do
-    contents <- runTest $ do
-        writeVirtual16 0x02000100 $ 5 `xor` 2^9
-        readVirtual16 0x02000100
-    contents @?= 5 `xor` 2^9
+basic3 = testProperty "write to on-board WRAM (16-bit)" . monadicIO $ do
+    n <- pick arbitrary
+    contents <- run . runTest $ do
+        writeVirtual32 0x02000100 n
+        readVirtual32 0x02000100
+    assert $ contents == n
 
 basic4 :: TestTree
-basic4 = testCase "write to on-chip WRAM (8-bit)" $ do
-    contents <- runTest $ do
-        writeVirtual8 0x020000FF 5
+basic4 = testProperty "write to on-chip WRAM (8-bit)" . monadicIO $ do
+    n <- pick arbitrary
+    contents <- run . runTest $ do
+        writeVirtual8 0x020000FF n
         readVirtual8 0x020000FF
-    contents @?= 5
+    assert $ contents == n
 
 bus1 :: TestTree
-bus1 = testCase "write with 8-bit, read with 16-bit" $ do
-    contents <- runTest $ do
-        writeVirtual8 0x02000000 5
-        writeVirtual8 0x02000001 18
+bus1 = testProperty "write with 8-bit, read with 16-bit" . monadicIO $ do
+    m <- pick arbitrary
+    l <- pick arbitrary
+    contents <- run . runTest $ do
+        writeVirtual8 0x02000000 l
+        writeVirtual8 0x02000001 m
         readVirtual16 0x02000000
-    contents @?= 5 `xor` shiftL 18 8
+    assert $ contents == fromIntegral l `xor` shiftL (fromIntegral m) 8
 
 bus2 :: TestTree
-bus2 = testCase "write with 16-bit, read with 8-bit" $ do
-    (ls, ms) <- runTest $ do
-        writeVirtual16 0x02000000 $ 5 `xor` shiftL 18 8
+bus2 = testProperty "write with 16-bit, read with 8-bit" . monadicIO $ do
+    n <- pick arbitrary
+    (ls, ms) <- run . runTest $ do
+        writeVirtual16 0x02000000 $ n
         (,) <$> readVirtual8 0x02000000 <*> readVirtual8 0x02000001
-    ls @?= 5
-    ms @?= 18
+    assert $ ls == fromIntegral (shiftR (shiftL n 8) 8)
+    assert $ ms == fromIntegral (shiftR n 8)
 
 bus3 :: TestTree
-bus3 = testCase "write with 16-bit, read with 32-bit" $ do
-    contents <- runTest $ do
-        writeVirtual16 0x02000000 5
-        writeVirtual16 0x02000002 18
+bus3 = testProperty "write with 16-bit, read with 32-bit" . monadicIO $ do
+    m <- pick arbitrary
+    l <- pick arbitrary
+    contents <- run . runTest $ do
+        writeVirtual16 0x02000000 l
+        writeVirtual16 0x02000002 m
         readVirtual32 0x02000000
-    contents @?= 5 `xor` shiftL 18 16
+    assert $ contents == fromIntegral l `xor` shiftL (fromIntegral m) 16

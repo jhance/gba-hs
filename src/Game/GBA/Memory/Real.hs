@@ -12,8 +12,6 @@ module Game.GBA.Memory.Real
     )
 where
 
-import           Debug.Trace
-
 import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.Base
@@ -66,4 +64,4 @@ readReal32 :: RealAddress -> GBA s Word32
 readReal32 (seg, off) = do
     ms <- fromIntegral <$> readReal16 (seg, off+2)
     ls <- fromIntegral <$> readReal16 (seg, off)
-    trace (show ms) . trace (show ls) . return $ shiftL ms 16 `xor` ls
+    return $ shiftL ms 16 `xor` ls
