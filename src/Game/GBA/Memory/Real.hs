@@ -9,6 +9,7 @@ module Game.GBA.Memory.Real
     , writeReal8
     , writeReal16
     , writeReal32
+    , virtual
     )
 where
 

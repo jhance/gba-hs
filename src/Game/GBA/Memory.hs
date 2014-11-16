@@ -27,7 +27,12 @@ import           Game.GBA.Memory.Real
 import           Numeric (showHex)
 
 writeMap :: MemoryWriteMap s
-writeMap = M.empty
+writeMap = M.unions
+    [ writeOnly16 0x04000000 $ writeLens timerReload0
+    , writeOnly16 0x04000002 $ writeLens timerReload1
+    , writeOnly16 0x04000004 $ writeLens timerReload2
+    , writeOnly16 0x04000006 $ writeLens timerReload3
+    ]
 
 readMap :: MemoryReadMap s
 readMap = M.empty
