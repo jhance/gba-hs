@@ -4,6 +4,8 @@
 module Game.GBA.Memory.Action
     ( MemoryReadAction(..)
     , MemoryWriteAction(..)
+    , MemoryReadMap
+    , MemoryWriteMap
     , readAction8
     , readAction16
     , readAction32
