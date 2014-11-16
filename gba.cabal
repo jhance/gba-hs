@@ -22,6 +22,8 @@ library
                      , Game.GBA.Thumb.Execution
                      , Game.GBA.Thumb.Instruction
                      , Game.GBA.Memory
+                     , Game.GBA.Memory.Real
+                     , Game.GBA.Memory.Action
                      , Game.GBA.MemoryMap
                      , Game.GBA.Monad
                      , Game.GBA.Register
@@ -31,6 +33,7 @@ library
   build-depends:       base >=4.7 && <4.8
                      , binary
                      , binary-literal-qq
+                     , containers
                      , lens
                      , mtl
                      , transformers

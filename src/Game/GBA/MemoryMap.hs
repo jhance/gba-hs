@@ -8,7 +8,8 @@ module Game.GBA.MemoryMap
     , SegmentOffset
     , virtual
     , makeMemoryMap
-    , unMemoryMap
+    , readRaw
+    , writeRaw
     )
 where
 
@@ -18,7 +19,11 @@ import           Control.Monad.ST
 import           Data.Word
 import qualified Data.Vector.Unboxed.Mutable as MUV
 import qualified Data.Vector.Mutable as MV
+import           Numeric (showHex)
 
+-- | Represents a memory mapping for *actual memory*.
+-- What this means is that some virtual address reads/writes
+-- will not actually go through this api.
 newtype MemoryMap s = MemoryMap {_unMemoryMap :: MV.MVector s (MUV.MVector s Word8)}
 
 makeLenses ''MemoryMap
@@ -56,7 +61,7 @@ ini x (a, b) = x >= a && x <= b
 
 -- | Used to access the memory map from a virtual memory address.
 -- Not total. Assumes that the address is valid.
-virtual :: VirtualAddress -> (Segment, SegmentOffset)
+virtual :: VirtualAddress -> RealAddress
 virtual x
     | x `ini` (0x00000000, 0x00003FFF) = (0, fromIntegral $ x - 0x00000000)
     | x `ini` (0x02000000, 0x0203FFFF) = (1, fromIntegral $ x - 0x02000000)
@@ -69,7 +74,29 @@ virtual x
     | x `ini` (0x08000000, 0x0DFFFFFF) = -- 7 through 102
         let k = fromIntegral $ (x - 0x080000000) `div` 0x10000
         in (7 + k, fromIntegral x - 0x08000000 + 0x100000 * k)
-    | otherwise = error "segment fault (invalid virtual address)"
+    | otherwise = error $ "segment fault (invalid virtual address): 0x" ++ showHex x ""
+
+writeRaw :: MemoryMap s -> RealAddress -> Word8 -> ST s ()
+writeRaw (MemoryMap mem) (seg, off) val = do
+    if seg >= MV.length mem
+        then error $ "segment fault (invalid segment): " ++ show seg
+        else do 
+            segv <- MV.read mem seg
+            if off >= MUV.length segv
+                then error $ "segment fault (invalid offset in segment " ++ show seg
+                                ++ "): 0x" ++ showHex off ""
+                else MUV.write segv off val
+
+readRaw :: MemoryMap s -> RealAddress -> ST s Word8
+readRaw (MemoryMap mem) (seg, off) = do
+    if seg >= MV.length mem
+        then error $ "segment fault (invalid segment): " ++ show seg
+        else do 
+            segv <- MV.read mem seg
+            if off >= MUV.length segv
+                then error $ "segment fault (invalid offset in segment " ++ show seg
+                                ++ "): 0x" ++ showHex off ""
+                else MUV.read segv off
 
 makeMemoryMap :: ST s (MemoryMap s)
 makeMemoryMap = MemoryMap <$> do
