@@ -55,10 +55,10 @@ data GBAContext s = GBAContext {
 -- 0x0400 0100, 0x0400 0104, 0x0040 0108, 0x004010C
 -- are written to. (Handled by @writeVirtual@)
 data TimerReloadSet s = TimerReloadSet {
-        timerReload0' :: STRef s Word16
-      , timerReload1' :: STRef s Word16
-      , timerReload2' :: STRef s Word16
-      , timerReload3' :: STRef s Word16
+        timerReload0' :: {-# UNPACK #-} !(STRef s Word16)
+      , timerReload1' :: {-# UNPACK #-} !(STRef s Word16)
+      , timerReload2' :: {-# UNPACK #-} !(STRef s Word16)
+      , timerReload3' :: {-# UNPACK #-} !(STRef s Word16)
     }
 
 timerReload0 :: GBAContext s -> STRef s Word16

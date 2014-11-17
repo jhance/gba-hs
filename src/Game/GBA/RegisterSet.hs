@@ -49,37 +49,37 @@ type RegisterID = Int
 -- use the @register@ function to get a lens to it; with this function you can
 -- 17 (or 16 in user mode) registers available for a specific mode.
 data RegisterSet s = RegisterSet {
-      register0 :: Register s
-    , register1 :: Register s
-    , register2 :: Register s
-    , register3 :: Register s
-    , register4 :: Register s
-    , register5 :: Register s
-    , register6 :: Register s
-    , register7 :: Register s
-    , register8 :: Register s
-    , register9 :: Register s
-    , register10 :: Register s
-    , register11 :: Register s
-    , register12 :: Register s
-    , register13 :: Register s
-    , register14 :: Register s
-    , register15 :: Register s
-    , register8fiq :: Register s
-    , register9fiq :: Register s
-    , register10fiq :: Register s
-    , register11fiq :: Register s
-    , register12fiq :: Register s
-    , register13fiq :: Register s
-    , register14fiq :: Register s
-    , register13svc :: Register s
-    , register14svc :: Register s
-    , register13abt :: Register s
-    , register14abt :: Register s
-    , register13irq :: Register s
-    , register14irq :: Register s
-    , register13und :: Register s
-    , register14und :: Register s
+      register0 :: {-# UNPACK #-} !(Register s)
+    , register1 :: {-# UNPACK #-} !(Register s)
+    , register2 :: {-# UNPACK #-} !(Register s)
+    , register3 :: {-# UNPACK #-} !(Register s)
+    , register4 :: {-# UNPACK #-} !(Register s)
+    , register5 :: {-# UNPACK #-} !(Register s)
+    , register6 :: {-# UNPACK #-} !(Register s)
+    , register7 :: {-# UNPACK #-} !(Register s)
+    , register8 :: {-# UNPACK #-} !(Register s)
+    , register9 :: {-# UNPACK #-} !(Register s)
+    , register10 :: {-# UNPACK #-} !(Register s)
+    , register11 :: {-# UNPACK #-} !(Register s)
+    , register12 :: {-# UNPACK #-} !(Register s)
+    , register13 :: {-# UNPACK #-} !(Register s)
+    , register14 :: {-# UNPACK #-} !(Register s)
+    , register15 :: {-# UNPACK #-} !(Register s)
+    , register8fiq :: {-# UNPACK #-} !(Register s)
+    , register9fiq :: {-# UNPACK #-} !(Register s)
+    , register10fiq :: {-# UNPACK #-} !(Register s)
+    , register11fiq :: {-# UNPACK #-} !(Register s)
+    , register12fiq :: {-# UNPACK #-} !(Register s)
+    , register13fiq :: {-# UNPACK #-} !(Register s)
+    , register14fiq :: {-# UNPACK #-} !(Register s)
+    , register13svc :: {-# UNPACK #-} !(Register s)
+    , register14svc :: {-# UNPACK #-} !(Register s)
+    , register13abt :: {-# UNPACK #-} !(Register s)
+    , register14abt :: {-# UNPACK #-} !(Register s)
+    , register13irq :: {-# UNPACK #-} !(Register s)
+    , register14irq :: {-# UNPACK #-} !(Register s)
+    , register13und :: {-# UNPACK #-} !(Register s)
+    , register14und :: {-# UNPACK #-} !(Register s)
     }
 
 data StatusRegisterSet s = StatusRegisterSet {
@@ -92,15 +92,15 @@ data StatusRegisterSet s = StatusRegisterSet {
     }
 
 data StatusRegister s = StatusRegister
-    { statusN :: STRef s Bool
-    , statusZ :: STRef s Bool
-    , statusC :: STRef s Bool
-    , statusV :: STRef s Bool
-    , statusQ :: STRef s Bool
-    , statusI :: STRef s Bool
-    , statusF :: STRef s Bool
-    , statusT :: STRef s ProcessorMode
-    , statusB :: STRef s BankMode
+    { statusN :: {-# UNPACK #-} !(STRef s Bool)
+    , statusZ :: {-# UNPACK #-} !(STRef s Bool)
+    , statusC :: {-# UNPACK #-} !(STRef s Bool)
+    , statusV :: {-# UNPACK #-} !(STRef s Bool)
+    , statusQ :: {-# UNPACK #-} !(STRef s Bool)
+    , statusI :: {-# UNPACK #-} !(STRef s Bool)
+    , statusF :: {-# UNPACK #-} !(STRef s Bool)
+    , statusT :: {-# UNPACK #-} !(STRef s ProcessorMode)
+    , statusB :: {-# UNPACK #-} !(STRef s BankMode)
     }
 
 -- | Generally we probably spend most of our time in @UserMode@.
