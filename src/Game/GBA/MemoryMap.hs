@@ -14,7 +14,6 @@ module Game.GBA.MemoryMap
 where
 
 import           Control.Applicative
-import           Control.Lens
 import           Control.Monad.ST
 import           Data.Word
 import qualified Data.Vector.Unboxed.Mutable as MUV
@@ -24,9 +23,7 @@ import           Numeric (showHex)
 -- | Represents a memory mapping for *actual memory*.
 -- What this means is that some virtual address reads/writes
 -- will not actually go through this api.
-newtype MemoryMap s = MemoryMap {_unMemoryMap :: MV.MVector s (MUV.MVector s Word8)}
-
-makeLenses ''MemoryMap
+newtype MemoryMap s = MemoryMap {unMemoryMap :: MV.MVector s (MUV.MVector s Word8)}
 
 -- | Addresses according to us.
 type RealAddress = (Segment, SegmentOffset)

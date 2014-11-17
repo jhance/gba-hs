@@ -14,6 +14,7 @@ module Game.GBA.Monad
     -- * General context lens operations
     , readLens
     , writeLens
+    , viewLens
     -- * Lenses
     , gbaRegisters
     , gbaMemoryMap
@@ -26,7 +27,6 @@ module Game.GBA.Monad
 where
 
 import           Control.Applicative
-import           Control.Lens
 import           Control.Monad.Base
 import           Control.Monad.Reader
 import           Control.Monad.ST
@@ -38,9 +38,9 @@ import           Game.GBA.RegisterSet
 import           Game.GBA.MemoryMap
 
 data GBAContext s = GBAContext {
-        _gbaRegisters :: RegisterSet s
-      , _gbaMemoryMap :: MemoryMap s
-      , _gbaTimerReloads :: TimerReloadSet s
+        gbaRegisters :: {-# UNPACK #-} !(RegisterSet s)
+      , gbaMemoryMap :: {-# UNPACK #-} !(MemoryMap s)
+      , gbaTimerReloads :: {-# UNPACK #-} !(TimerReloadSet s)
     }
 
 -- | When you write to a timer virtual memory location,
@@ -52,26 +52,23 @@ data GBAContext s = GBAContext {
 -- 0x0400 0100, 0x0400 0104, 0x0040 0108, 0x004010C
 -- are written to. (Handled by @writeVirtual@)
 data TimerReloadSet s = TimerReloadSet {
-        _timerReload0' :: STRef s Word16
-      , _timerReload1' :: STRef s Word16
-      , _timerReload2' :: STRef s Word16
-      , _timerReload3' :: STRef s Word16
+        timerReload0' :: STRef s Word16
+      , timerReload1' :: STRef s Word16
+      , timerReload2' :: STRef s Word16
+      , timerReload3' :: STRef s Word16
     }
 
-makeLenses ''GBAContext
-makeLenses ''TimerReloadSet
+timerReload0 :: GBAContext s -> STRef s Word16
+timerReload0 = timerReload0' . gbaTimerReloads
 
-timerReload0 :: Lens' (GBAContext s) (STRef s Word16)
-timerReload0 = gbaTimerReloads . timerReload0'
+timerReload1 :: GBAContext s -> STRef s Word16
+timerReload1 = timerReload1' . gbaTimerReloads
 
-timerReload1 :: Lens' (GBAContext s) (STRef s Word16)
-timerReload1 = gbaTimerReloads . timerReload1'
+timerReload2 :: GBAContext s -> STRef s Word16
+timerReload2 = timerReload2' . gbaTimerReloads
 
-timerReload2 :: Lens' (GBAContext s) (STRef s Word16)
-timerReload2 = gbaTimerReloads . timerReload2'
-
-timerReload3 :: Lens' (GBAContext s) (STRef s Word16)
-timerReload3 = gbaTimerReloads . timerReload3'
+timerReload3 :: GBAContext s -> STRef s Word16
+timerReload3 = timerReload3' . gbaTimerReloads
 
 makeTimerReloadSet :: ST s (TimerReloadSet s)
 makeTimerReloadSet = TimerReloadSet
@@ -84,11 +81,20 @@ makeGBAContext = GBAContext
     <*> makeMemoryMap
     <*> makeTimerReloadSet
 
-readLens :: Lens' (GBAContext s) (STRef s a) -> GBA s a
-readLens lens = view lens >>= liftBase . readSTRef
+readLens :: (GBAContext s -> (STRef s a)) -> GBA s a
+readLens lens = do
+    context <- ask
+    liftBase . readSTRef $ lens context
 
-writeLens :: Lens' (GBAContext s) (STRef s a) -> a -> GBA s ()
-writeLens lens val = view lens >>= liftBase . flip writeSTRef val
+writeLens :: (GBAContext s -> (STRef s a)) -> a -> GBA s ()
+writeLens lens val = do
+    context <- ask
+    liftBase $ writeSTRef (lens context) val
+
+viewLens :: (GBAContext s -> a) -> GBA s a
+viewLens lens = do
+    context <- ask
+    return $ lens context
 
 newtype GBA s a = GBA (ReaderT (GBAContext s) (ST s) a)
     deriving (Functor, Applicative, Monad, MonadReader (GBAContext s),

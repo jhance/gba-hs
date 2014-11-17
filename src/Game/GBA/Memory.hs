@@ -13,7 +13,6 @@ module Game.GBA.Memory
     )
 where
 
-import           Control.Lens
 import           Control.Monad.Base
 import           Control.Monad.ST
 import qualified Data.Map as M
@@ -41,7 +40,7 @@ readMap = M.empty
 writeVirtual8 :: VirtualAddress -> Word8 -> GBA s ()
 writeVirtual8 addr = case M.lookup addr writeMap of
     Nothing -> writeReal8 $ virtual addr
-    Just k -> case view writeAction8 k of
+    Just k -> case writeAction8 k of
         Nothing -> const $
             error $ "memory fault: illegal 8-bit write at 0x" ++ showHex addr ""
         Just f -> f
@@ -50,7 +49,7 @@ writeVirtual8 addr = case M.lookup addr writeMap of
 writeVirtual16 :: VirtualAddress -> Word16 -> GBA s ()
 writeVirtual16 addr = case M.lookup addr writeMap of
     Nothing -> writeReal16 $ virtual addr
-    Just k -> case view writeAction16 k of
+    Just k -> case writeAction16 k of
         Nothing -> const $
             error $ "memory fault: illegal 16-bit write at 0x" ++ showHex addr ""
         Just f -> f
@@ -59,7 +58,7 @@ writeVirtual16 addr = case M.lookup addr writeMap of
 writeVirtual32 :: VirtualAddress -> Word32 -> GBA s ()
 writeVirtual32 addr = case M.lookup addr writeMap of
     Nothing -> writeReal32 $ virtual addr
-    Just k -> case view writeAction32 k of
+    Just k -> case writeAction32 k of
         Nothing -> const $
             error $ "memory fault: illegal 32-bit write at 0x" ++ showHex addr ""
         Just f -> f
@@ -68,7 +67,7 @@ writeVirtual32 addr = case M.lookup addr writeMap of
 readVirtual8 :: VirtualAddress -> GBA s Word8
 readVirtual8 addr = case M.lookup addr readMap of
     Nothing -> readReal8 $ virtual addr
-    Just k -> case view readAction8 k of
+    Just k -> case readAction8 k of
         Nothing -> error $ "memory fault: illegal 8-bit read at 0x" ++ showHex addr ""
         Just f -> f
 
@@ -76,7 +75,7 @@ readVirtual8 addr = case M.lookup addr readMap of
 readVirtual16 :: VirtualAddress -> GBA s Word16
 readVirtual16 addr = case M.lookup addr readMap of
     Nothing -> readReal16 $ virtual addr
-    Just k -> case view readAction16 k of
+    Just k -> case readAction16 k of
         Nothing -> error $ "memory fault: illegal 16-bit read at 0x" ++ showHex addr ""
         Just f -> f
 
@@ -84,6 +83,6 @@ readVirtual16 addr = case M.lookup addr readMap of
 readVirtual32 :: VirtualAddress -> GBA s Word32
 readVirtual32 addr = case M.lookup addr readMap of
     Nothing -> readReal32 $ virtual addr
-    Just k -> case view readAction32 k of
+    Just k -> case readAction32 k of
         Nothing -> error $ "memory fault: illegal 32-bit read at 0x" ++ showHex addr ""
         Just f -> f

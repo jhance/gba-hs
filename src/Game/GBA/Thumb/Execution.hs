@@ -16,14 +16,18 @@ setZero val = setCondition CFZero $ val == 0
 setSign :: Word32 -> GBA s ()
 setSign val = setCondition CFSign $ testBit val 31
 
+sz :: Word32 -> [(ConditionFlag, Bool)]
+sz val = [(CFZero, val == 0), (CFSign, testBit val 31)]
+
 -- t1
 -----
 executeT1 :: TSROpcode -> Word8 -> RegisterID -> RegisterID -> GBA s ()
 executeT1 TSRO_LSL 0 src dest = do
     val <- readRegister src
     writeRegister dest val
-    --setSign val
-    --setZero val
+    setSign val
+    setZero val
+
 executeT1 _ 0 _ _ = error "invalid t1; should through exception!"
 executeT1 TSRO_LSL n src dest = do
     val <- readRegister src

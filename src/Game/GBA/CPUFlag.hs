@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Game.GBA.CPUFlag
     ( ConditionFlag(..)
     , ControlFlag(..)
@@ -42,7 +43,10 @@ setCondition flag k = withCPSR $ \t -> if k
     else clearBit t (conditionIndex flag)
 
 setConditions :: [(ConditionFlag, Bool)] -> GBA s ()
-setConditions = mapM_ $ uncurry setCondition
+setConditions cs = withCPSR $ \t -> foldr g t cs
+    where g (c, b) !acc = if b
+            then setBit acc (conditionIndex c)
+            else clearBit acc (conditionIndex c)
 
 setModeRaw :: ProcessorMode -> GBA s ()
 setModeRaw mode = withCPSR $ \t -> if fromEnum mode == 1

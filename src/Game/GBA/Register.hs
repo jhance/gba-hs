@@ -17,14 +17,13 @@ module Game.GBA.Register
     )
 where
 
-import           Control.Lens
 import           Data.Bits
 import           Data.Word
 import           Game.GBA.Monad
 import           Game.GBA.RegisterSet
 
-register :: BankMode -> RegisterID -> Lens' (GBAContext s) (Register s)
-register bank reg = gbaRegisters . register' bank reg
+register :: BankMode -> RegisterID -> GBAContext s -> Register s
+register bank reg = register' bank reg . gbaRegisters
 
 readCPSR :: GBA s Word32
 readCPSR = readLens $ register UserMode cpsr

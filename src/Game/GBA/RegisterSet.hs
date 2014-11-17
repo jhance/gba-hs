@@ -5,7 +5,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Game.GBA.RegisterSet
     ( Register
-    , RegisterSet
+    , RegisterSet(..)
     , RegisterID
     , register'
     , makeRegisterSet
@@ -26,10 +26,8 @@ module Game.GBA.RegisterSet
 where
 
 import           Control.Applicative
-import           Control.Lens
 import           Control.Monad.Reader
 import           Control.Monad.ST
-import           Data.Bits.Lens
 import           Data.Binary
 import           Data.Word
 import           Data.STRef
@@ -49,46 +47,44 @@ type RegisterID = Int
 -- use the @register@ function to get a lens to it; with this function you can
 -- 17 (or 16 in user mode) registers available for a specific mode.
 data RegisterSet s = RegisterSet {
-      _register0 :: Register s
-    , _register1 :: Register s
-    , _register2 :: Register s
-    , _register3 :: Register s
-    , _register4 :: Register s
-    , _register5 :: Register s
-    , _register6 :: Register s
-    , _register7 :: Register s
-    , _register8 :: Register s
-    , _register9 :: Register s
-    , _register10 :: Register s
-    , _register11 :: Register s
-    , _register12 :: Register s
-    , _register13 :: Register s
-    , _register14 :: Register s
-    , _register15 :: Register s
-    , _register8fiq :: Register s
-    , _register9fiq :: Register s
-    , _register10fiq :: Register s
-    , _register11fiq :: Register s
-    , _register12fiq :: Register s
-    , _register13fiq :: Register s
-    , _register14fiq :: Register s
-    , _register13svc :: Register s
-    , _register14svc :: Register s
-    , _register13abt :: Register s
-    , _register14abt :: Register s
-    , _register13irq :: Register s
-    , _register14irq :: Register s
-    , _register13und :: Register s
-    , _register14und :: Register s
-    , _registerCPSR :: Register s
-    , _registerSPSRfiq :: Register s
-    , _registerSPSRsvc :: Register s
-    , _registerSPSRabt :: Register s
-    , _registerSPSRirq :: Register s
-    , _registerSPSRund :: Register s
+      register0 :: Register s
+    , register1 :: Register s
+    , register2 :: Register s
+    , register3 :: Register s
+    , register4 :: Register s
+    , register5 :: Register s
+    , register6 :: Register s
+    , register7 :: Register s
+    , register8 :: Register s
+    , register9 :: Register s
+    , register10 :: Register s
+    , register11 :: Register s
+    , register12 :: Register s
+    , register13 :: Register s
+    , register14 :: Register s
+    , register15 :: Register s
+    , register8fiq :: Register s
+    , register9fiq :: Register s
+    , register10fiq :: Register s
+    , register11fiq :: Register s
+    , register12fiq :: Register s
+    , register13fiq :: Register s
+    , register14fiq :: Register s
+    , register13svc :: Register s
+    , register14svc :: Register s
+    , register13abt :: Register s
+    , register14abt :: Register s
+    , register13irq :: Register s
+    , register14irq :: Register s
+    , register13und :: Register s
+    , register14und :: Register s
+    , registerCPSR :: Register s
+    , registerSPSRfiq :: Register s
+    , registerSPSRsvc :: Register s
+    , registerSPSRabt :: Register s
+    , registerSPSRirq :: Register s
+    , registerSPSRund :: Register s
     }
-
-makeLenses ''RegisterSet
 
 -- | Generally we probably spend most of our time in @UserMode@.
 data BankMode = UserMode | FIQMode | SupervisorMode | AbortMode | IRQMode | UndefinedMode | SystemMode
@@ -139,7 +135,7 @@ programCounter = 15
 -- This is an insane amount of boilerplate, but I'm actually
 -- not sure what a better way to do this is. Luckily it is
 -- all encapsulated within here.
-register' :: BankMode -> RegisterID -> Lens' (RegisterSet s) (Register s)
+register' :: BankMode -> RegisterID -> RegisterSet s -> Register s
 register' _ 0 = register0
 register' _ 1 = register1
 register' _ 2 = register2

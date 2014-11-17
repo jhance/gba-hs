@@ -14,7 +14,6 @@ module Game.GBA.Memory.Real
 where
 
 import           Control.Applicative
-import           Control.Lens
 import           Control.Monad.Base
 import           Data.Bits
 import           Data.Word
@@ -24,7 +23,7 @@ import           Game.GBA.Monad
 -- | Write to a real address. (in 8-bit mode)
 writeReal8 :: RealAddress -> Word8 -> GBA s ()
 writeReal8 addr val = do
-    mem <- view $ gbaMemoryMap
+    mem <- viewLens gbaMemoryMap
     liftBase $ writeRaw mem addr val
 
 -- | Write to a real address. (in 16-bit mode)
@@ -46,7 +45,7 @@ writeReal32 (seg, off) val = do
 -- | Read from a real address. (in 8-bit mode)
 readReal8 :: RealAddress -> GBA s Word8
 readReal8 addr = do
-    mem <- view $ gbaMemoryMap
+    mem <- viewLens gbaMemoryMap
     liftBase $ readRaw mem addr
 
 -- | Read from a real address. (in 16-bit mode)

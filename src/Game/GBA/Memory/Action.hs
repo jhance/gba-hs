@@ -6,12 +6,6 @@ module Game.GBA.Memory.Action
     , MemoryWriteAction(..)
     , MemoryReadMap
     , MemoryWriteMap
-    , readAction8
-    , readAction16
-    , readAction32
-    , writeAction8
-    , writeAction16
-    , writeAction32
     -- * Utilities
     , readOnly8
     , readOnly16
@@ -22,7 +16,6 @@ module Game.GBA.Memory.Action
     )
 where
 
-import           Control.Lens
 import           Data.Word
 import qualified Data.Map as M
 import           Game.GBA.MemoryMap
@@ -37,9 +30,9 @@ import           Game.GBA.Monad
 -- If any of the actions are @Nothing@, an error (or exception)
 -- will be thrown upon trying to write with that bus size.
 data MemoryReadAction s = MemoryReadAction {
-      _readAction8 :: Maybe (GBA s Word8)
-    , _readAction16 :: Maybe (GBA s Word16)
-    , _readAction32 :: Maybe (GBA s Word32)
+      readAction8 :: Maybe (GBA s Word8)
+    , readAction16 :: Maybe (GBA s Word16)
+    , readAction32 :: Maybe (GBA s Word32)
     }
 
 type MemoryReadMap s = M.Map Word32 (MemoryReadAction s)
@@ -62,9 +55,9 @@ readOnly32 addr act = M.singleton addr $ MemoryReadAction Nothing Nothing (Just 
 -- If any of the actions are @Nothing@, an error (or exception)
 -- will be thrown upon trying to write with that bus size.
 data MemoryWriteAction s = MemoryWriteAction {
-      _writeAction8 :: Maybe (Word8 -> GBA s ())
-    , _writeAction16 :: Maybe (Word16 -> GBA s ())
-    , _writeAction32 :: Maybe (Word32 -> GBA s ())
+      writeAction8 :: Maybe (Word8 -> GBA s ())
+    , writeAction16 :: Maybe (Word16 -> GBA s ())
+    , writeAction32 :: Maybe (Word32 -> GBA s ())
     }
 
 type MemoryWriteMap s = M.Map Word32 (MemoryWriteAction s)
@@ -77,6 +70,3 @@ writeOnly16 addr act = M.singleton addr $ MemoryWriteAction Nothing (Just act) N
 
 writeOnly32 :: VirtualAddress -> (Word32 -> GBA s ()) -> MemoryWriteMap s
 writeOnly32 addr act = M.singleton addr $ MemoryWriteAction Nothing Nothing (Just act)
-
-makeLenses ''MemoryReadAction
-makeLenses ''MemoryWriteAction
