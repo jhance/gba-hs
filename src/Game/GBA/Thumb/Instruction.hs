@@ -10,6 +10,7 @@ module Game.GBA.Thumb.Instruction
     , TASOperandType(..)
     , TASOperation(..)
     , TMCASOpcode(..)
+    , TALUOpcode(..)
     )
 where
 
@@ -131,6 +132,7 @@ parseT inst = fromMaybe (error "Failed to parse instruction") . runParser inst $
     [ parse0
     , parse1
     , parse2
+    , parse3
     ]
 
 parse0 :: Parser TInstruction
@@ -167,7 +169,7 @@ parse2 = do
 
 parse3 :: Parser TInstruction
 parse3 = do
-    require 5 [b|10000|]
+    require 6 [b|010000|]
     opcode <- toEnum <$> getBits 4
     source <- getBits 3
     dest <- getBits 3

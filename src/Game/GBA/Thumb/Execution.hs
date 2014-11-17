@@ -71,7 +71,7 @@ executeT2 otype atype operand src dest = do
     setZero result
     setSign result
     setCondition CFCarry $ result < val
-    setCondition CFOverflow $ result < val && sameSign
+    setCondition CFOverflow $ sameSign && testBit val 31 /= testBit result 31
 
 tasValue :: TASOperandType -> Word8 -> GBA s Word32
 tasValue TASO_REG = readRegister . fromIntegral

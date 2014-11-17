@@ -33,6 +33,16 @@ tests = testGroup "parser" $
         , tmcas3
         , tmcas4
         ]
+    , testGroup "alu operations (t4)"
+        [ talu1
+        , talu2
+        , talu3
+        , talu4
+        , talu5
+        , talu6
+        , talu7
+        , talu8
+        ]
     ]
 
 --- t1
@@ -93,6 +103,42 @@ tmcas3 :: TestTree
 tmcas3 = testCase "add immediate" $ parseT [b|001 10 000 10101010|]
     @?= TMCAS TMCASO_ADD [b|000|] [b|10101010|]
 
+-- | Subtract is just add with a twos-complement so its not actually
+-- that different.
 tmcas4 :: TestTree
 tmcas4 = testCase "subtract immediate" $ parseT [b|001 11 111 10000101|]
     @?= TMCAS TMCASO_SUB [b|111|] [b|10000101|]
+
+--- t4
+------
+talu1 :: TestTree
+talu1 = testCase "and" $ parseT [b|010000 0000 010 100|]
+    @?= TALU TALU_AND [b|010|] [b|100|]
+
+talu2 :: TestTree
+talu2 = testCase "eor" $ parseT [b|010000 0001 010 100|]
+    @?= TALU TALU_EOR [b|010|] [b|100|]
+
+talu3 :: TestTree
+talu3 = testCase "lsl" $ parseT [b|010000 0010 010 100|]
+    @?= TALU TALU_LSL [b|010|] [b|100|]
+
+talu4 :: TestTree
+talu4 = testCase "lsr" $ parseT [b|010000 0011 010 100|]
+    @?= TALU TALU_LSR [b|010|] [b|100|]
+
+talu5 :: TestTree
+talu5 = testCase "asr" $ parseT [b|010000 0100 011 101|]
+    @?= TALU TALU_ASR [b|011|] [b|101|]
+
+talu6 :: TestTree
+talu6 = testCase "adc" $ parseT [b|010000 0101 011 101|]
+    @?= TALU TALU_ADC [b|011|] [b|101|]
+
+talu7 :: TestTree
+talu7 = testCase "sbc" $ parseT [b|010000 0110 011 101|]
+    @?= TALU TALU_SBC [b|011|] [b|101|]
+
+talu8 :: TestTree
+talu8 = testCase "ror" $ parseT [b|010000 0111 011 101|]
+    @?= TALU TALU_ROR [b|011|] [b|101|]
