@@ -12,7 +12,6 @@ import           Data.Bits
 import           Data.Word
 
 import           Game.GBA.Boot (bootForTest)
-import           Game.GBA.CPUFlag
 import           Game.GBA.Monad
 import           Game.GBA.Register
 import           Game.GBA.Thumb.Instruction
@@ -73,9 +72,9 @@ tests = testGroup "execution"
 getShiftResult :: RegisterID -> GBA s (Word32, Bool, Bool, Bool)
 getShiftResult reg = (,,,)
     <$> readRegister reg
-    <*> getCondition CFCarry
-    <*> getCondition CFZero
-    <*> getCondition CFSign
+    <*> readStatus statusC
+    <*> readStatus statusZ
+    <*> readStatus statusN
 
 -- t1.1
 -------
@@ -277,10 +276,10 @@ shiftRegASR4 = testCase "shift register ASR with sign bit multiple, with carry" 
 getTASResult :: RegisterID -> GBA s (Word32, Bool, Bool, Bool, Bool)
 getTASResult reg = (,,,,)
     <$> readRegister reg
-    <*> getCondition CFCarry
-    <*> getCondition CFZero
-    <*> getCondition CFSign
-    <*> getCondition CFOverflow
+    <*> readStatus statusC
+    <*> readStatus statusZ
+    <*> readStatus statusN
+    <*> readStatus statusV
 
 tasAdd1 :: TestTree
 tasAdd1 = testCase "tas add simple immediate" $ do

@@ -3,21 +3,22 @@ module Game.GBA.Register
     ( RegisterSet
     , Register
     , RegisterID
+    , StatusRegister(..)
     , BankMode(..)
+    , ProcessorMode(..)
     -- * Access to registers
     , register
     , readRegister
     , writeRegister
-    -- * CPSR & Bank modes
-    , readCPSR
-    , setCPSR
-    , withCPSR
+    -- * Status registers
+    , readStatus
+    , writeStatus
     , currentBankMode
-    , setBankMode
     )
 where
 
 import           Data.Bits
+import           Data.STRef
 import           Data.Word
 import           Game.GBA.Monad
 import           Game.GBA.RegisterSet
@@ -25,32 +26,32 @@ import           Game.GBA.RegisterSet
 register :: BankMode -> RegisterID -> GBAContext s -> Register s
 register bank reg = register' bank reg . gbaRegisters
 
-readCPSR :: GBA s Word32
-readCPSR = readLens $ register UserMode cpsr
+readStatus :: (StatusRegister s -> STRef s a) -> GBA s a
+readStatus lens = readLens $ lens . registerCPSR . gbaStatusRegisters
 
-setCPSR :: Word32 -> GBA s ()
-setCPSR = writeLens $ register UserMode cpsr
-
-withCPSR :: (Word32 -> Word32) -> GBA s ()
-withCPSR f = do
-    c <- readCPSR
-    setCPSR $ f c
+writeStatus :: (StatusRegister s -> STRef s a) -> a -> GBA s ()
+writeStatus lens = writeLens $ lens . registerCPSR . gbaStatusRegisters
 
 currentBankMode :: GBA s BankMode
-currentBankMode = return UserMode
-    --c <- readCPSR
-    --return . fromModeBits . fromIntegral $ shiftL c 27
+currentBankMode = readStatus statusB
 
-setBankMode :: BankMode -> GBA s ()
-setBankMode mode = do
-    d <- readCPSR 
-    setCPSR $ shiftL (shiftR d 5) 5 + fromIntegral (toModeBits mode)
-
+-- | TODO special case spsr/cpsr
+--
+-- My assumption is that we don't actually compute the bank mode
+-- in the case that we don't need to do to laziness - but I'm
+-- not completely sure on that! In any case, bank mode is very
+-- fast to calculate now.
 readRegister :: RegisterID -> GBA s Word32
 readRegister reg = do
     bank <- currentBankMode
     readLens $ register bank reg
 
+-- | TODO special case spsr/cpsr
+--
+-- My assumption is that we don't actually compute the bank mode
+-- in the case that we don't need to do to laziness - but I'm
+-- not completely sure on that! In any case, bank mode is very
+-- fast to calculate now.
 writeRegister :: RegisterID -> Word32 -> GBA s ()
 writeRegister reg val = do
     bank <- currentBankMode

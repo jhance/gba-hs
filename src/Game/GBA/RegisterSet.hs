@@ -11,14 +11,16 @@ module Game.GBA.RegisterSet
     , makeRegisterSet
 
     -- * Special registers
-    , cpsr
     , linkRegister
     , programCounter
-    , spsr
     , stackPointer
 
-    -- * Things that don't even belong in this module
-    , BankMode(..) -- TODO Needs to get out of here.
+    -- Status registers
+    , StatusRegister(..)
+    , StatusRegisterSet(..)
+    , BankMode(..)
+    , ProcessorMode(..)
+    , makeStatusRegisterSet
     , fromModeBits
     , toModeBits
     )
@@ -78,19 +80,38 @@ data RegisterSet s = RegisterSet {
     , register14irq :: Register s
     , register13und :: Register s
     , register14und :: Register s
-    , registerCPSR :: Register s
-    , registerSPSRfiq :: Register s
-    , registerSPSRsvc :: Register s
-    , registerSPSRabt :: Register s
-    , registerSPSRirq :: Register s
-    , registerSPSRund :: Register s
+    }
+
+data StatusRegisterSet s = StatusRegisterSet {
+      registerCPSR :: {-# UNPACK #-} !(StatusRegister s)
+    , registerSPSRfiq :: {-# UNPACK #-} !(StatusRegister s)
+    , registerSPSRsvc :: {-# UNPACK #-} !(StatusRegister s)
+    , registerSPSRabt :: {-# UNPACK #-} !(StatusRegister s)
+    , registerSPSRirq :: {-# UNPACK #-} !(StatusRegister s)
+    , registerSPSRund :: {-# UNPACK #-} !(StatusRegister s)
+    }
+
+data StatusRegister s = StatusRegister
+    { statusN :: STRef s Bool
+    , statusZ :: STRef s Bool
+    , statusC :: STRef s Bool
+    , statusV :: STRef s Bool
+    , statusQ :: STRef s Bool
+    , statusI :: STRef s Bool
+    , statusF :: STRef s Bool
+    , statusT :: STRef s ProcessorMode
+    , statusB :: STRef s BankMode
     }
 
 -- | Generally we probably spend most of our time in @UserMode@.
 data BankMode = UserMode | FIQMode | SupervisorMode | AbortMode | IRQMode | UndefinedMode | SystemMode
 
+-- | Processor state.
+data ProcessorMode = ARM | Thumb
+    deriving (Enum, Ord, Eq, Show, Read)
+
 -- | Converts a 5-bit representation into a bank mode.
-fromModeBits :: Int -> BankMode
+fromModeBits :: Integral i => i -> BankMode
 fromModeBits [b|10000|] = UserMode
 fromModeBits [b|10001|] = FIQMode
 fromModeBits [b|10010|] = IRQMode
@@ -101,7 +122,7 @@ fromModeBits [b|11111|] = SystemMode
 fromModeBits _ = error "fromModeBits: invalid mode"
 
 -- | Converts a @BankMode@ into its 5-bit representation.
-toModeBits :: BankMode -> Int
+toModeBits :: Integral i => BankMode -> i
 toModeBits UserMode = [b|10000|]
 toModeBits FIQMode = [b|10001|]
 toModeBits IRQMode = [b|10010|]
@@ -109,14 +130,6 @@ toModeBits SupervisorMode = [b|10011|]
 toModeBits AbortMode = [b|10111|]
 toModeBits UndefinedMode = [b|11011|]
 toModeBits SystemMode = [b|11111|]
-
--- | The CPSR register.
-cpsr :: RegisterID
-cpsr = 16
-
--- | The SPSR register.
-spsr :: RegisterID
-spsr = 17
 
 stackPointer :: RegisterID
 stackPointer = 13
@@ -171,17 +184,18 @@ register' IRQMode 14 = register14irq
 register' UndefinedMode 13 = register13und
 register' UndefinedMode 14 = register14und
 
+-- program pointer
 register' _ 15 = register15
 
-register' _ 16 = registerCPSR
+makeStatusRegister :: ST s (StatusRegister s)
+makeStatusRegister = let k = newSTRef False in StatusRegister
+    <$> k <*> k <*> k <*> k <*> k
+    <*> k <*> k <*> newSTRef ARM <*> newSTRef SystemMode
 
-register' UserMode 17 = error "Attempted to access SPSR register in User mode"
-register' SystemMode 17 = error "Attempted to access SPSR register in System mode"
-register' FIQMode 17 = registerSPSRfiq
-register' SupervisorMode 17 = registerSPSRsvc
-register' AbortMode 17 = registerSPSRabt
-register' IRQMode 17 = registerSPSRirq
-register' UndefinedMode 17 = registerSPSRund
+makeStatusRegisterSet :: ST s (StatusRegisterSet s)
+makeStatusRegisterSet = let m = makeStatusRegister in StatusRegisterSet
+    <$> m <*> m <*> m <*> m <*> m
+    <*> m
 
 -- | Makes a register set, with every register initialized to zero.
 --
@@ -195,5 +209,4 @@ makeRegisterSet = let k = newSTRef 0 in RegisterSet
     <*> k <*> k <*> k <*> k <*> k -- 15
     <*> k <*> k <*> k <*> k <*> k -- 20
     <*> k <*> k <*> k <*> k <*> k -- 25
-    <*> k <*> k <*> k <*> k <*> k -- 30
-    <*> k <*> k
+    <*> k

@@ -5,19 +5,15 @@ where
 import           Control.Applicative
 import           Data.Bits
 import           Data.Word
-import           Game.GBA.CPUFlag
 import           Game.GBA.Thumb.Instruction
 import           Game.GBA.Monad
 import           Game.GBA.Register
 
 setZero :: Word32 -> GBA s ()
-setZero val = setCondition CFZero $ val == 0
+setZero val = writeStatus statusZ $ val == 0
 
 setSign :: Word32 -> GBA s ()
-setSign val = setCondition CFSign $ testBit val 31
-
-sz :: Word32 -> [(ConditionFlag, Bool)]
-sz val = [(CFZero, val == 0), (CFSign, testBit val 31)]
+setSign val = writeStatus statusN $ testBit val 31
 
 -- t1
 -----
@@ -33,14 +29,14 @@ executeT1 TSRO_LSL n src dest = do
     val <- readRegister src
     let val' = shiftL val (fromIntegral n)
     writeRegister dest val'
-    setCondition CFCarry $ testBit val 31
+    writeStatus statusC $ testBit val 31
     setZero val'
     setSign val'
 executeT1 TSRO_LSR n src dest = do
     val <- readRegister src
     let val' = shiftR val (fromIntegral n)
     writeRegister dest val'
-    setCondition CFCarry $ testBit val (fromIntegral n - 1)
+    writeStatus statusC $ testBit val (fromIntegral n - 1)
     setZero val'
     setSign val'
 executeT1 TSRO_ASR n src dest = do
@@ -51,7 +47,7 @@ executeT1 TSRO_ASR n src dest = do
                     then shiftL (complement 0) (32 - n') + val'
                     else val'
     writeRegister dest val''
-    setCondition CFCarry $ testBit val (n' - 1)
+    writeStatus statusC $ testBit val (n' - 1)
     setZero val''
     setSign val''
 
@@ -74,8 +70,8 @@ executeT2 otype atype operand src dest = do
     writeRegister dest $ val + operand'
     setZero result
     setSign result
-    setCondition CFCarry $ result < val
-    setCondition CFOverflow $ sameSign && testBit val 31 /= testBit result 31
+    writeStatus statusC $ result < val
+    writeStatus statusV $ sameSign && testBit val 31 /= testBit result 31
 
 tasValue :: TASOperandType -> Word8 -> GBA s Word32
 tasValue TASO_REG = readRegister . fromIntegral

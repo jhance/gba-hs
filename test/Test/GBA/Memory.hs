@@ -11,10 +11,10 @@ import           Data.Word
 import           Numeric
 
 import           Game.GBA.Boot
-import           Game.GBA.CPUFlag
 import           Game.GBA.Memory
 import           Game.GBA.Memory.Real
 import           Game.GBA.Monad
+import           Game.GBA.Register
 
 import           Test.HUnit hiding (assert)
 import           Test.Tasty (TestTree, testGroup)

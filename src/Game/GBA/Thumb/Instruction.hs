@@ -69,23 +69,23 @@ data TALUOpcode = TALU_AND
 data TInstruction =
       TSR -- Shift register. (t1)
         TSROpcode -- Opcode, one of LSL, LSR, ASR (2 bits)
-        Word8 -- Offset (5 bits)
-        RegisterID -- Source (3 bits)
-        RegisterID -- Destination (3 bits)
+        {-# UNPACK #-} !Word8 -- Offset (5 bits)
+        {-# UNPACK #-} !RegisterID -- Source (3 bits)
+        {-# UNPACK #-} !RegisterID -- Destination (3 bits)
     | TAS -- Add or subtract register into another. (t2)
         TASOperandType -- MSB of opcode (1 bit)
         TASOperation -- LSB of opcode (0 bit)
-        Word8 -- Either a register ID or a number (3 bits)
-        RegisterID -- Source register (3 bits)
-        RegisterID -- Destination register (3 bits)
+        {-# UNPACK #-} !Word8 -- Either a register ID or a number (3 bits)
+        {-# UNPACK #-} !RegisterID -- Source register (3 bits)
+        {-# UNPACK #-} !RegisterID -- Destination register (3 bits)
     | TMCAS -- Move, compare, add, or subtract. (t3)
         TMCASOpcode -- Opcode, one of MOV, CMP, ADD, SUB (2 bits)
-        RegisterID -- Destination register
-        Word8 -- Unsigned immediate (8 bits)
+        {-# UNPACK #-} !RegisterID -- Destination register
+        {-# UNPACK #-} !Word8 -- Unsigned immediate (8 bits)
     | TALU
         TALUOpcode -- Opcode. Many options. (4 bits)
-        RegisterID -- Source register
-        RegisterID -- Destination register
+        {-# UNPACK #-} !RegisterID -- Source register
+        {-# UNPACK #-} !RegisterID -- Destination register
     deriving (Show, Read, Eq, Ord)
 
 chop x t = shiftR (shiftL x t) t

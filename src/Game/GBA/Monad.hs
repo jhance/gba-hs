@@ -17,6 +17,7 @@ module Game.GBA.Monad
     , viewLens
     -- * Lenses
     , gbaRegisters
+    , gbaStatusRegisters
     , gbaMemoryMap
     -- ** Timer lenses
     , timerReload0
@@ -39,6 +40,7 @@ import           Game.GBA.MemoryMap
 
 data GBAContext s = GBAContext {
         gbaRegisters :: {-# UNPACK #-} !(RegisterSet s)
+      , gbaStatusRegisters :: {-# UNPACK #-} !(StatusRegisterSet s)
       , gbaMemoryMap :: {-# UNPACK #-} !(MemoryMap s)
       , gbaTimerReloads :: {-# UNPACK #-} !(TimerReloadSet s)
     }
@@ -78,6 +80,7 @@ makeTimerReloadSet = TimerReloadSet
 makeGBAContext :: ST s (GBAContext s)
 makeGBAContext = GBAContext
     <$> makeRegisterSet
+    <*> makeStatusRegisterSet
     <*> makeMemoryMap
     <*> makeTimerReloadSet
 
