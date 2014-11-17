@@ -4,3 +4,7 @@
 /TODO
 /cabal.sandbox.config
 /tags
+/bench.*
+/cabal.config
+/noprof
+/out.html
