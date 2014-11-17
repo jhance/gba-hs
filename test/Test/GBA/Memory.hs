@@ -4,7 +4,6 @@ module Test.GBA.Memory
 where
 
 import           Control.Applicative
-import           Control.Lens
 import           Control.Monad.ST
 import           Data.Bits
 import           Data.STRef
@@ -120,7 +119,7 @@ bus4 = testProperty "write with 32-bit, read with 16-bit" . monadicIO $ do
     assert $ ls == fromIntegral (shiftR (shiftL n 16) 16)
     assert $ ms == fromIntegral (shiftR n 16)
 
-timerTest :: Lens' (GBAContext RealWorld) (STRef RealWorld Word16)
+timerTest :: (GBAContext RealWorld -> STRef RealWorld Word16)
           -> VirtualAddress -> TestTree
 timerTest lns loc = testProperty ("write to timer 0x" ++ showHex loc "") . monadicIO $ do
     k <- pick arbitrary
