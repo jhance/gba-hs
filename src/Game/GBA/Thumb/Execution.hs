@@ -19,16 +19,16 @@ setSign val = writeStatus statusN $ testBit val 31
 -----
 executeT1 :: TSROpcode -> Word8 -> RegisterID -> RegisterID -> GBA s ()
 executeT1 TSRO_LSL 0 src dest = do
-    val <- readRegister src
-    writeRegister dest val
+    val <- readSafeRegister src
+    writeSafeRegister dest val
     setSign val
     setZero val
 
 executeT1 _ 0 _ _ = error "invalid t1; should through exception!"
 executeT1 TSRO_LSL n src dest = do
-    val <- readRegister src
+    val <- readSafeRegister src
     let val' = shiftL val (fromIntegral n)
-    writeRegister dest val'
+    writeSafeRegister dest val'
     writeStatus statusC $ testBit val 31
     setZero val'
     setSign val'

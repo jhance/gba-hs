@@ -10,6 +10,8 @@ module Game.GBA.Register
     , register
     , readRegister
     , writeRegister
+    , readSafeRegister
+    , writeSafeRegister
     -- * Status registers
     , readStatus
     , writeStatus
@@ -46,6 +48,9 @@ readRegister reg = do
     bank <- currentBankMode
     readLens $ register bank reg
 
+readSafeRegister :: RegisterID -> GBA s Word32
+readSafeRegister reg = readLens $ register UserMode reg
+
 -- | TODO special case spsr/cpsr
 --
 -- My assumption is that we don't actually compute the bank mode
@@ -57,3 +62,5 @@ writeRegister reg val = do
     bank <- currentBankMode
     writeLens (register bank reg) val
 
+writeSafeRegister :: RegisterID -> Word32 -> GBA s ()
+writeSafeRegister reg val = writeLens (register UserMode reg) val
