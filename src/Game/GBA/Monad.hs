@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -90,7 +91,7 @@ readLens lens = do
     liftBase . readSTRef $ lens context
 
 writeLens :: (GBAContext s -> (STRef s a)) -> a -> GBA s ()
-writeLens lens val = do
+writeLens lens !val = do
     context <- ask
     liftBase $ writeSTRef (lens context) val
 
