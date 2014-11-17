@@ -38,9 +38,9 @@ withCPSR f = do
     setCPSR $ f c
 
 currentBankMode :: GBA s BankMode
-currentBankMode = do
-    c <- readCPSR
-    return . fromModeBits . fromIntegral $ shiftL c 27
+currentBankMode = return UserMode
+    --c <- readCPSR
+    --return . fromModeBits . fromIntegral $ shiftL c 27
 
 setBankMode :: BankMode -> GBA s ()
 setBankMode mode = do
