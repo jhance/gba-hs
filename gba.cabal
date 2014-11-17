@@ -9,7 +9,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Jared Hance
 maintainer:          jared.hance@case.edu
--- copyright:           
+copyright:           Copyright 2014 Jared Hance
 category:            Game
 build-type:          Simple
 -- extra-source-files:  
