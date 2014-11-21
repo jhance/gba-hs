@@ -42,6 +42,14 @@ tests = testGroup "parser" $
         , talu6
         , talu7
         , talu8
+        , talu9
+        , talu10
+        , talu11
+        , talu12
+        , talu13
+        , talu14
+        , talu15
+        , talu16
         ]
     ]
 
@@ -142,3 +150,35 @@ talu7 = testCase "sbc" $ parseT [b|010000 0110 011 101|]
 talu8 :: TestTree
 talu8 = testCase "ror" $ parseT [b|010000 0111 011 101|]
     @?= TALU TALU_ROR [b|011|] [b|101|]
+
+talu9 :: TestTree
+talu9 = testCase "tst" $ parseT [b|010000 1000 011 101|]
+    @?= TALU TALU_TST [b|011|] [b|101|]
+
+talu10 :: TestTree
+talu10 = testCase "neg" $ parseT [b|010000 1001 011 101|]
+    @?= TALU TALU_NEG [b|011|] [b|101|]
+
+talu11 :: TestTree
+talu11 = testCase "sbc" $ parseT [b|010000 1010 011 101|]
+    @?= TALU TALU_CMP [b|011|] [b|101|]
+
+talu12 :: TestTree
+talu12 = testCase "ror" $ parseT [b|010000 1011 011 101|]
+    @?= TALU TALU_CMN [b|011|] [b|101|]
+
+talu13 :: TestTree
+talu13 = testCase "orr" $ parseT [b|010000 1100 011 101|]
+    @?= TALU TALU_ORR [b|011|] [b|101|]
+
+talu14 :: TestTree
+talu14 = testCase "mul" $ parseT [b|010000 1101 011 101|]
+    @?= TALU TALU_MUL [b|011|] [b|101|]
+
+talu15 :: TestTree
+talu15 = testCase "bic" $ parseT [b|010000 1110 011 101|]
+    @?= TALU TALU_BIC [b|011|] [b|101|]
+
+talu16 :: TestTree
+talu16 = testCase "mvn" $ parseT [b|010000 1111 011 101|]
+    @?= TALU TALU_MVN [b|011|] [b|101|]
