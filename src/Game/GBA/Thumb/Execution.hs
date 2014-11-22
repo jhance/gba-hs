@@ -101,7 +101,7 @@ executeT3 TMCASO_ADD reg num = do
     writeSafeRegister reg result
 executeT3 opcode reg num = do -- cmp, sub
     val <- readSafeRegister reg
-    let result = val + complement num + 1
+    let result = val - num
         neg = testBit val 31
     setZero result
     setSign result

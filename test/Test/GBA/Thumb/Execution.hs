@@ -106,12 +106,12 @@ tests = testGroup "execution"
           , tmcasCmp13
           ]
       , testGroup "add (t3.3)"
-          [
+          [ tmcasAdd1
           ]
       -- sub is basically cmp but with modified out register
       -- so testing it extensively is fairly pointless
       , testGroup "sub (t3.4)"
-          [
+          [ tmcasSub1
           ]
       ]
     ]
@@ -532,3 +532,26 @@ tmcasCmp13 = testCase "tmcas cmp N flag with negative, set to 0" $ do
         execute $ TMCAS TMCASO_CMP 1 [b|1111|]
         readStatus statusN
     n @?= False
+
+-- t3.3
+-------
+
+tmcasAdd1 :: TestTree
+tmcasAdd1 = testProperty "tmcas add correctly sets register" $ do
+    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r n
+        execute $ TMCAS TMCASO_ADD r (fromIntegral k)
+        result <- readSafeRegister r
+        return $ result == n + fromIntegral k
+
+-- t3.4
+-------
+
+tmcasSub1 :: TestTree
+tmcasSub1 = testProperty "tmcas sub correctly sets register" $ do
+    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r n
+        execute $ TMCAS TMCASO_SUB r (fromIntegral k)
+        result <- readSafeRegister r
+        return $ result == n + complement (fromIntegral k) + 1 
+                    && result == n - fromIntegral k
