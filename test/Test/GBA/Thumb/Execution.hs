@@ -22,7 +22,7 @@ import           Test.HUnit hiding (assert)
 import           Test.Tasty (TestTree, testGroup)
 import           Test.Tasty.HUnit (testCase)
 import           Test.Tasty.QuickCheck (testProperty)
-import           Test.QuickCheck
+import           Test.QuickCheck hiding ((.&.))
 import           Test.QuickCheck.Monadic
 import           Test.QuickCheck.Modifiers
 
@@ -124,6 +124,12 @@ tests = testGroup "execution"
       -- so testing it extensively is fairly pointless
       , testGroup "sub (t3.4)"
           [ tmcasSub1
+          ]
+      ]
+    , testGroup "alu (t4)"
+      [ testGroup "and (t4.1)"
+          [ taluAnd1
+          , taluAnd2
           ]
       ]
     ]
@@ -663,3 +669,26 @@ tmcasSub1 = testProperty "tmcas sub correctly sets register" $
         result <- readSafeRegister r
         return $ result == n + complement (fromIntegral k) + 1 
                     && result == n - fromIntegral k
+
+-- t4
+-----
+
+-- t4.1
+-------
+
+taluAnd1 :: TestTree
+taluAnd1 = testProperty "talu and correctly sets register (src /= dest)" $
+    \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
+        writeSafeRegister src n1
+        writeSafeRegister dest n2
+        execute $ TALU TALU_AND src dest
+        result <- readSafeRegister dest
+        return $ result == n1 .&. n2
+
+taluAnd2 :: TestTree
+taluAnd2 = testProperty "talu and correctly sets register (src == dest)" $
+    \(n, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r n
+        execute $ TALU TALU_AND r r
+        result <- readSafeRegister r
+        return $ result == n

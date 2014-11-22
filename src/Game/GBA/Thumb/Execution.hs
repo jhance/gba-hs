@@ -56,12 +56,9 @@ executeT1 TSRO_ASR n src dest = do
 -- | Gets either the register or the direct number
 -- for a TAS.
 
-tasOperation :: TASOperation -> Word32 -> Word32 -> Word32
-tasOperation TASO_ADD = (+)
-tasOperation TASO_SUB = (-)
-
 -- t2
 -----
+-- needs refactor
 executeT2 :: TASOperandType -> TASOperation -> Word8
           -> RegisterID -> RegisterID -> GBA s ()
 executeT2 otype atype operand src dest = do
@@ -110,6 +107,17 @@ executeT3 opcode reg num = do -- cmp, sub
     writeStatus statusV $ neg && not (testBit result 31)
     when (opcode ==  TMCASO_SUB) $ writeSafeRegister reg result
 
+-- t4
+-----
+executeT4 :: TALUOpcode -> RegisterID -> RegisterID -> GBA s ()
+executeT4 TALU_AND src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    let result = in1 .&. in2
+    setZero result
+    setSign result
+    writeSafeRegister dest result
+
 -- | Execution of any Thumb mode instruction.
 -- Please do not try to execute outside of Thumb mode.
 -- There is no check.
@@ -120,3 +128,5 @@ execute (TAS srcType opType operand source dest) =
     executeT2 srcType opType operand source dest
 execute (TMCAS opcode dest num) =
     executeT3 opcode dest num
+execute (TALU opcode src dest) =
+    executeT4 opcode src dest
