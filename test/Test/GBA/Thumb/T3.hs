@@ -91,14 +91,14 @@ t3parser4 = testCase "subtract immediate" $ parseT [b|001 11 111 10000101|]
 -- t3.1
 -------
 t3mov1 :: TestTree
-t3mov1 = testProperty "t3.1 mov always clears status-N" $
+t3mov1 = testProperty "mov always clears status-N" $
     \(num, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r 5
         execute $ T3 T3_MOV r num
         not <$> readStatus statusN
 
 t3mov2 :: TestTree
-t3mov2 = testProperty "t3.1 mov sets register to value" $
+t3mov2 = testProperty "mov sets register to value" $
     \(num, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r 5
         execute $ T3 T3_MOV r num
@@ -106,7 +106,7 @@ t3mov2 = testProperty "t3.1 mov sets register to value" $
         return $ res == num
 
 t3mov3 :: TestTree
-t3mov3 = testCase "t3.1 mov zero" $ do
+t3mov3 = testCase "mov zero" $ do
     z <- runTest $ do
         writeSafeRegister [b|000|] 5
         execute $ T3 T3_MOV [b|000|] 0
@@ -114,7 +114,7 @@ t3mov3 = testCase "t3.1 mov zero" $ do
     z @?= True
 
 t3mov4 :: TestTree
-t3mov4 = testCase "t3.1 mov nonzero" $ do
+t3mov4 = testCase "mov nonzero" $ do
     z <- runTest $ do
         writeSafeRegister [b|000|] 5
         execute $ T3 T3_MOV [b|000|] 10
@@ -124,7 +124,7 @@ t3mov4 = testCase "t3.1 mov nonzero" $ do
 -- t3.2
 -------
 t3cmp1 :: TestTree
-t3cmp1 = testProperty "t3.2 cmp does not change register" $
+t3cmp1 = testProperty "cmp does not change register" $
   \(n, (ThumbRegister r), k :: Word8) -> runPure $ do
       writeSafeRegister r n
       execute $ T3 T3_CMP r (fromIntegral k)
@@ -132,42 +132,42 @@ t3cmp1 = testProperty "t3.2 cmp does not change register" $
       return $ n == n'
             
 t3cmp2 :: TestTree
-t3cmp2 = testProperty "t3.2 cmp Z flag equal" $
+t3cmp2 = testProperty "cmp Z flag equal" $
     \(n :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r $ fromIntegral n
         execute $ T3 T3_CMP r (fromIntegral n)
         readStatus statusZ
 
 t3cmp3 :: TestTree
-t3cmp3 = testProperty "t3.2 cmp Z flag nonequal" $
+t3cmp3 = testProperty "cmp Z flag nonequal" $
     \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n /= k ==> runPure $ do
         writeSafeRegister r $ fromIntegral n
         execute $ T3 T3_CMP r (fromIntegral k)
         not <$> readStatus statusZ
 
 t3cmp4 :: TestTree
-t3cmp4 = testProperty "t3.2 cmp C flag equal" $
+t3cmp4 = testProperty "cmp C flag equal" $
     \(n :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r $ fromIntegral n
         execute $ T3 T3_CMP r (fromIntegral n)
         readStatus statusC
 
 t3cmp5 :: TestTree
-t3cmp5 = testProperty "t3.2 cmp C flag gte" $
+t3cmp5 = testProperty "cmp C flag gte" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> n > fromIntegral k ==> runPure $ do
         writeSafeRegister r n
         execute $ T3 T3_CMP r (fromIntegral k)
         readStatus statusC
 
 t3cmp6 :: TestTree
-t3cmp6 = testProperty "t3.2 cmp C flag lte" $
+t3cmp6 = testProperty "cmp C flag lte" $
     \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n < k ==> runPure $ do
         writeSafeRegister r (fromIntegral n)
         execute $ T3 T3_CMP r (fromIntegral k)
         not <$> readStatus statusC
 
 t3cmp7 :: TestTree
-t3cmp7 = testCase "t3.2 cmp V flag on overflow" $ do
+t3cmp7 = testCase "cmp V flag on overflow" $ do
     v <- runTest $ do
         writeSafeRegister 0 [b|10000000 00000000 00000000 00000111|]
         execute $ T3 T3_CMP 0 [b|1000|]
@@ -175,7 +175,7 @@ t3cmp7 = testCase "t3.2 cmp V flag on overflow" $ do
     v @?= True
 
 t3cmp8 :: TestTree
-t3cmp8 = testCase "t3.2 cmp V flag on no overflow" $ do
+t3cmp8 = testCase "cmp V flag on no overflow" $ do
     v <- runTest $ do
         writeSafeRegister 1 [b|11111111 11111111 11111111 11111100|]
         execute $ T3 T3_CMP 1 [b|11|]
@@ -183,28 +183,28 @@ t3cmp8 = testCase "t3.2 cmp V flag on no overflow" $ do
     v @?= False
 
 t3cmp9 :: TestTree
-t3cmp9 = testProperty "t3.2 cmp N flag with two positive, set to 1" $
+t3cmp9 = testProperty "cmp N flag with two positive, set to 1" $
     \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n < k ==> runPure $ do
         writeSafeRegister r (fromIntegral n)
         execute $ T3 T3_CMP r (fromIntegral k)
         readStatus statusN
 
 t3cmp10 :: TestTree
-t3cmp10 = testProperty "t3.2 cmp N flag with two positive, set to 0" $
+t3cmp10 = testProperty "cmp N flag with two positive, set to 0" $
     \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n > k ==> runPure $ do
         writeSafeRegister r (fromIntegral n)
         execute $ T3 T3_CMP r (fromIntegral k)
         not <$> readStatus statusN
 
 t3cmp11 :: TestTree
-t3cmp11 = testProperty "t3.2 cmp N flag with two equal, set to 0" $
+t3cmp11 = testProperty "cmp N flag with two equal, set to 0" $
     \(n :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r (fromIntegral n)
         execute $ T3 T3_CMP r (fromIntegral n)
         not <$> readStatus statusN
 
 t3cmp12 :: TestTree
-t3cmp12 = testCase "t3.2 cmp N flag with negative, set to 1" $ do
+t3cmp12 = testCase "cmp N flag with negative, set to 1" $ do
     n <- runTest $ do
         writeSafeRegister 0 [b|10000000 00000000 00000000 00000111|]
         execute $ T3 T3_CMP 0 [b|11|]
@@ -212,7 +212,7 @@ t3cmp12 = testCase "t3.2 cmp N flag with negative, set to 1" $ do
     n @?= True
 
 t3cmp13 :: TestTree
-t3cmp13 = testCase "t3.2 cmp N flag with negative, set to 0" $ do
+t3cmp13 = testCase "cmp N flag with negative, set to 0" $ do
     n <- runTest $ do
         writeSafeRegister 1 [b|10000000 00000000 00000000 00000111|]
         execute $ T3 T3_CMP 1 [b|1111|]
@@ -223,7 +223,7 @@ t3cmp13 = testCase "t3.2 cmp N flag with negative, set to 0" $ do
 -------
 
 t3add1 :: TestTree
-t3add1 = testProperty "t3.3 add correctly sets register" $
+t3add1 = testProperty "add correctly sets register" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r n
         execute $ T3 T3_ADD r (fromIntegral k)
@@ -231,7 +231,7 @@ t3add1 = testProperty "t3.3 add correctly sets register" $
         return $ result == n + fromIntegral k
 
 t3add2 :: TestTree
-t3add2 = testProperty "t3.3 add Z flag, set to 1" $
+t3add2 = testProperty "add Z flag, set to 1" $
     \(k :: Word8, (ThumbRegister r)) -> runPure $ do
         let k' = fromIntegral k :: Word32
         writeSafeRegister r (maxBound - k' + 1)
@@ -239,14 +239,14 @@ t3add2 = testProperty "t3.3 add Z flag, set to 1" $
         readStatus statusZ
 
 t3add3 :: TestTree
-t3add3 = testProperty "t3.3 add Z flag, set to 0" $
+t3add3 = testProperty "add Z flag, set to 0" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> n + fromIntegral k /= 0 ==> runPure $ do
         writeSafeRegister r n
         execute $ T3 T3_ADD r (fromIntegral k)
         not <$> readStatus statusZ
 
 t3add4 :: TestTree
-t3add4 = testCase "t3.3 add Z flag, 0 + 0 = 0" $ do
+t3add4 = testCase "add Z flag, 0 + 0 = 0" $ do
     z <- runTest $ do
         writeSafeRegister 0 0
         execute $ T3 T3_ADD 0 0
@@ -254,14 +254,14 @@ t3add4 = testCase "t3.3 add Z flag, 0 + 0 = 0" $ do
     z @?= True
 
 t3add5 :: TestTree
-t3add5 = testProperty "t3.3 add C flag, for small values" $
+t3add5 = testProperty "add C flag, for small values" $
     \(n :: Word16, k :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r (fromIntegral n)
         execute $ T3 T3_ADD r (fromIntegral k)
         not <$> readStatus statusC
 
 t3add6 :: TestTree
-t3add6 = testProperty "t3.3 add C flag, for large values" $
+t3add6 = testProperty "add C flag, for large values" $
     \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n < k ==> runPure $ do
         let n' = maxBound - fromIntegral n :: Word32
         writeSafeRegister r n'
@@ -269,7 +269,7 @@ t3add6 = testProperty "t3.3 add C flag, for large values" $
         readStatus statusC
 
 t3add7 :: TestTree
-t3add7 = testProperty "t3.3 add C flag, when zero" $
+t3add7 = testProperty "add C flag, when zero" $
     \(k :: Word8, (ThumbRegister r)) -> k /= 0 ==> runPure $ do
         let k' = fromIntegral k :: Word32
         writeSafeRegister r (maxBound - k' + 1)
@@ -277,21 +277,21 @@ t3add7 = testProperty "t3.3 add C flag, when zero" $
         readStatus statusC
 
 t3add8 :: TestTree
-t3add8 = testProperty "t3.3 add V flag is 0 when register is negative" $
+t3add8 = testProperty "add V flag is 0 when register is negative" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r $ setBit n 31
         execute $ T3 T3_ADD r (fromIntegral k)
         not <$> readStatus statusV
 
 t3add9 :: TestTree
-t3add9 = testProperty "t3.3 add V flag is 0 when literal is 0" $
+t3add9 = testProperty "add V flag is 0 when literal is 0" $
     \(n :: Word32, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r n
         execute $ T3 T3_ADD r 0
         not <$> readStatus statusV
 
 t3add10 :: TestTree
-t3add10 = testCase "t3.3 add V flag, set to 0" $ do
+t3add10 = testCase "add V flag, set to 0" $ do
     v <- runTest $ do
         writeSafeRegister [b|000|] [b|01111111 11111111 11111111 11111110|]
         execute $ T3 T3_ADD [b|000|] [b|1|]
@@ -299,7 +299,7 @@ t3add10 = testCase "t3.3 add V flag, set to 0" $ do
     v @?= False
 
 t3add11 :: TestTree
-t3add11 = testCase "t3.3 add V flag, set to 1" $ do
+t3add11 = testCase "add V flag, set to 1" $ do
     v <- runTest $ do
         writeSafeRegister [b|000|] [b|01111111 11111111 11111111 11111110|]
         execute $ T3 T3_ADD [b|000|] [b|10|]
@@ -307,7 +307,7 @@ t3add11 = testCase "t3.3 add V flag, set to 1" $ do
     v @?= True
 
 t3add12 :: TestTree
-t3add12 = testProperty "t3.3 add N flag" $
+t3add12 = testProperty "add N flag" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
         let k' = fromIntegral k :: Word32
         writeSafeRegister r n
@@ -317,7 +317,7 @@ t3add12 = testProperty "t3.3 add N flag" $
         return $ sn == testBit (n + k') 31
 
 t3add13 :: TestTree
-t3add13 = testProperty "t3.3 add N flag (large)" $
+t3add13 = testProperty "add N flag (large)" $
     \(n, k :: Word8, (ThumbRegister r)) -> runPure $ do
         let k' = fromIntegral k :: Word32
         writeSafeRegister r $ getLarge n
@@ -330,7 +330,7 @@ t3add13 = testProperty "t3.3 add N flag (large)" $
 -------
 
 t3sub1 :: TestTree
-t3sub1 = testProperty "t3.4 sub correctly sets register" $
+t3sub1 = testProperty "sub correctly sets register" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r n
         execute $ T3 T3_SUB r (fromIntegral k)

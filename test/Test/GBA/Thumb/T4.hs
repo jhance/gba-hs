@@ -120,7 +120,7 @@ t4parser16 = testCase "mvn" $ parseT [b|010000 1111 011 101|]
 -- t4.1
 -------
 t4and1 :: TestTree
-t4and1 = testProperty "t4.1 and correctly sets register (src /= dest)" $
+t4and1 = testProperty "and correctly sets register (src /= dest)" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -129,7 +129,7 @@ t4and1 = testProperty "t4.1 and correctly sets register (src /= dest)" $
         return $ result == n1 .&. n2
 
 t4and2 :: TestTree
-t4and2 = testProperty "t4.1 and correctly sets register (src == dest)" $
+t4and2 = testProperty "and correctly sets register (src == dest)" $
     \(n, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r n
         execute $ T4 T4_AND r r
@@ -137,7 +137,7 @@ t4and2 = testProperty "t4.1 and correctly sets register (src == dest)" $
         return $ result == n
 
 t4and3 :: TestTree
-t4and3 = testProperty "t4.1 and Z flag" $
+t4and3 = testProperty "and Z flag" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -147,7 +147,7 @@ t4and3 = testProperty "t4.1 and Z flag" $
         return $ z == (result == 0)
 
 t4and4 :: TestTree
-t4and4 = testProperty "t4.1 and Z flag set with zero src" $
+t4and4 = testProperty "and Z flag set with zero src" $
     \(n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         let n1 = 0
         writeSafeRegister src n1
@@ -157,7 +157,7 @@ t4and4 = testProperty "t4.1 and Z flag set with zero src" $
         readStatus statusZ
 
 t4and5 :: TestTree
-t4and5 = testProperty "t4.1 and Z flag set with zero dest" $
+t4and5 = testProperty "and Z flag set with zero dest" $
     \(n1, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         let n2 = 0
         writeSafeRegister src n1
@@ -167,7 +167,7 @@ t4and5 = testProperty "t4.1 and Z flag set with zero dest" $
         readStatus statusZ
 
 t4and6 :: TestTree
-t4and6 = testProperty "t4.1 and N flag" $
+t4and6 = testProperty "and N flag" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src $ getLarge n1
         writeSafeRegister dest $ getLarge n2
