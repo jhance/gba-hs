@@ -559,19 +559,19 @@ tmcasAdd2 = testProperty "tmcas add Z flag, set to 1" $ do
         readStatus statusZ
 
 tmcasAdd3 :: TestTree
-tmcasAdd3 = testCase "tmcas add Z flag, 0 + 0 = 0" $ do
+tmcasAdd3 = testProperty "tmcas add Z flag, set to 0" $ do
+    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> n + fromIntegral k /= 0 ==> runPure $ do
+        writeSafeRegister r n
+        execute $ TMCAS TMCASO_ADD r (fromIntegral k)
+        not <$> readStatus statusZ
+
+tmcasAdd4 :: TestTree
+tmcasAdd4 = testCase "tmcas add Z flag, 0 + 0 = 0" $ do
     z <- runTest $ do
         writeSafeRegister 0 0
         execute $ TMCAS TMCASO_ADD 0 0
         readStatus statusZ
     z @?= True
-
-tmcasAdd4 :: TestTree
-tmcasAdd4 = testProperty "tmcas add Z flag, set to 0" $ do
-    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> n + fromIntegral k /= 0 ==> runPure $ do
-        writeSafeRegister r n
-        execute $ TMCAS TMCASO_ADD r (fromIntegral k)
-        not <$> readStatus statusZ
 
 tmcasAdd5 :: TestTree
 tmcasAdd5 = testProperty "tmcas add C flag, for small values" $ do
