@@ -133,6 +133,7 @@ tests = testGroup "execution"
           , taluAnd3
           , taluAnd4
           , taluAnd5
+          , taluAnd6
           ]
       ]
     ]
@@ -697,7 +698,7 @@ taluAnd2 = testProperty "talu and correctly sets register (src == dest)" $
         return $ result == n
 
 taluAnd3 :: TestTree
-taluAnd3 = testProperty "talu Z flag" $ do
+taluAnd3 = testProperty "talu Z flag" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -707,7 +708,7 @@ taluAnd3 = testProperty "talu Z flag" $ do
         return $ z == (result == 0)
 
 taluAnd4 :: TestTree
-taluAnd4 = testProperty "talu Z flag set with zero src" $ do
+taluAnd4 = testProperty "talu Z flag set with zero src" $
     \(n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         let n1 = 0
         writeSafeRegister src n1
@@ -717,7 +718,7 @@ taluAnd4 = testProperty "talu Z flag set with zero src" $ do
         readStatus statusZ
 
 taluAnd5 :: TestTree
-taluAnd5 = testProperty "talu Z flag set with zero dest" $ do
+taluAnd5 = testProperty "talu Z flag set with zero dest" $
     \(n1, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         let n2 = 0
         writeSafeRegister src n1
@@ -725,3 +726,13 @@ taluAnd5 = testProperty "talu Z flag set with zero dest" $ do
         execute $ TALU TALU_AND src dest
         result <- readSafeRegister dest
         readStatus statusZ
+
+taluAnd6 :: TestTree
+taluAnd6 = testProperty "talu N flag" $
+    \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ TALU TALU_AND src dest
+        result <- readSafeRegister dest
+        n <- readStatus statusN
+        return $ n == testBit (getLarge n1 .&. getLarge n2) 31
