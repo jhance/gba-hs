@@ -6,11 +6,11 @@ module Game.GBA.Thumb.Instruction
     ( TInstruction(..)
     , parseT
     -- * Opcodes
-    , TSROpcode(..)
-    , TASOperandType(..)
-    , TASOperation(..)
-    , TMCASOpcode(..)
-    , TALUOpcode(..)
+    , T1Opcode(..)
+    , T2OperandType(..)
+    , T2Operation(..)
+    , T3Opcode(..)
+    , T4Opcode(..)
     )
 where
 
@@ -24,66 +24,66 @@ import           Language.Literals.Binary
 import           Game.GBA.Register
 
 -- | Shift register.
-data TSROpcode = TSRO_LSL -- ^ Shift left
-               | TSRO_LSR -- ^ Logical shift right
-               | TSRO_ASR -- ^ Arithmetic shift right (preseves sign bit)
-               deriving (Enum, Show, Read, Eq, Ord)
+data T1Opcode = T1_LSL -- ^ Shift left
+              | T1_LSR -- ^ Logical shift right
+              | T1_ASR -- ^ Arithmetic shift right (preseves sign bit)
+              deriving (Enum, Show, Read, Eq, Ord)
 
-data TASOperandType = TASO_REG
-                    | TASO_NUM
-                    deriving (Enum, Show, Read, Eq, Ord)
+data T2OperandType = T2_REG
+                   | T2_NUM
+                   deriving (Enum, Show, Read, Eq, Ord)
 
-data TASOperation = TASO_ADD
-                  | TASO_SUB
+data T2Operation = T2_ADD
+                  | T2_SUB
                   deriving (Enum, Show, Read, Eq, Ord)
 
 -- | Move, compare, add or subtract. Compare only modifies CPU flags.
-data TMCASOpcode = TMCASO_MOV
-                 | TMCASO_CMP
-                 | TMCASO_ADD
-                 | TMCASO_SUB
+data T3Opcode = T3_MOV
+                 | T3_CMP
+                 | T3_ADD
+                 | T3_SUB
                  deriving (Enum, Show, Read, Eq, Ord)
 
 -- | A whole bunch of ALU instructions.
-data TALUOpcode = TALU_AND
-                | TALU_EOR
-                | TALU_LSL
-                | TALU_LSR
-                | TALU_ASR
-                | TALU_ADC
-                | TALU_SBC
-                | TALU_ROR
-                | TALU_TST
-                | TALU_NEG
-                | TALU_CMP
-                | TALU_CMN
-                | TALU_ORR
-                | TALU_MUL
-                | TALU_BIC
-                | TALU_MVN
+data T4Opcode = T4_AND
+                | T4_EOR
+                | T4_LSL
+                | T4_LSR
+                | T4_ASR
+                | T4_ADC
+                | T4_SBC
+                | T4_ROR
+                | T4_TST
+                | T4_NEG
+                | T4_CMP
+                | T4_CMN
+                | T4_ORR
+                | T4_MUL
+                | T4_BIC
+                | T4_MVN
                 deriving (Enum, Show, Read, Eq, Ord)
 
 -- | Thumb instructions.
 -- This is an intermediate format - only used right before execution.
 -- For this reason, we aren't compact - we use @Int@ for register ids.
 data TInstruction =
-      TSR -- Shift register. (t1)
-        TSROpcode -- Opcode, one of LSL, LSR, ASR (2 bits)
+      T1 -- Shift register. (t1)
+        T1Opcode -- Opcode, one of LSL, LSR, ASR (2 bits)
         {-# UNPACK #-} !Word8 -- Offset (5 bits)
         {-# UNPACK #-} !RegisterID -- Source (3 bits)
         {-# UNPACK #-} !RegisterID -- Destination (3 bits)
-    | TAS -- Add or subtract register into another. (t2)
-        TASOperandType -- MSB of opcode (1 bit)
-        TASOperation -- LSB of opcode (0 bit)
+    | T2 -- Add or subtract register into another. (t2)
+        T2OperandType -- MSB of opcode (1 bit)
+        T2Operation -- LSB of opcode (0 bit)
         {-# UNPACK #-} !Word8 -- Either a register ID or a number (3 bits)
         {-# UNPACK #-} !RegisterID -- Source register (3 bits)
         {-# UNPACK #-} !RegisterID -- Destination register (3 bits)
-    | TMCAS -- Move, compare, add, or subtract. (t3)
-        TMCASOpcode -- Opcode, one of MOV, CMP, ADD, SUB (2 bits)
+    | T3 -- Move, compare, add, or subtract. (t3)
+        T3Opcode -- Opcode, one of MOV, CMP, ADD, SUB (2 bits)
         {-# UNPACK #-} !RegisterID -- Destination register
         {-# UNPACK #-} !Word32 -- Unsigned immediate (8 bits)
-    | TALU
-        TALUOpcode -- Opcode. Many options. (4 bits)
+    | T4
+        T4Opcode -- Opcode. Many options. (4 bits)
         {-# UNPACK #-} !RegisterID -- Source register
         {-# UNPACK #-} !RegisterID -- Destination register
     deriving (Show, Read, Eq, Ord)
@@ -144,10 +144,10 @@ parse0 = do
     offset <- getBits 5
     source <- getBits 3
     dest <- getBits 3
-    let offset' = if offset == 0 && (opcode' == TSRO_ASR || opcode' == TSRO_LSR)
+    let offset' = if offset == 0 && (opcode' == T1_ASR || opcode' == T1_LSR)
             then 32
             else offset
-    return $ TSR opcode' offset' source dest
+    return $ T1 opcode' offset' source dest
 
 parse1 :: Parser TInstruction
 parse1 = do
@@ -157,7 +157,7 @@ parse1 = do
     operand <- getBits 3
     source <- getBits 3
     dest <- getBits 3
-    return $ TAS isImmediate isSub operand source dest
+    return $ T2 isImmediate isSub operand source dest
 
 parse2 :: Parser TInstruction
 parse2 = do
@@ -165,7 +165,7 @@ parse2 = do
     opcode <- toEnum <$> getBits 2
     dest <- getBits 3
     operand <- getBits 8
-    return $ TMCAS opcode dest operand
+    return $ T3 opcode dest operand
 
 parse3 :: Parser TInstruction
 parse3 = do
@@ -173,4 +173,4 @@ parse3 = do
     opcode <- toEnum <$> getBits 4
     source <- getBits 3
     dest <- getBits 3
-    return $ TALU opcode source dest
+    return $ T4 opcode source dest

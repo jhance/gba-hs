@@ -8,3 +8,4 @@
 /cabal.config
 /noprof
 /out.html
+/.tasty-rerun-log

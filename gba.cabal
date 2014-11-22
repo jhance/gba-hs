@@ -50,8 +50,11 @@ test-suite test
   main-is:             Main.hs
   other-modules:       
                        Test.GBA.Thumb
-                     , Test.GBA.Thumb.Execution
-                     , Test.GBA.Thumb.Instruction
+                     , Test.GBA.Thumb.T1
+                     , Test.GBA.Thumb.T2
+                     , Test.GBA.Thumb.T3
+                     , Test.GBA.Thumb.T4
+                     , Test.GBA.Memory
   build-depends:       base
                      , binary-literal-qq
                      , gba

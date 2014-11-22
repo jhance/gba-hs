@@ -22,7 +22,7 @@ main1 = do
     -- singleton list
     defaultMain . return . bench "shift register lsl" . whnfIO . stToIO . runGBA context $ do
         writeRegister [b|000|] 57
-        execute $ TSR TSRO_LSL 1 0 1
+        execute $ T1 T1_LSL 1 0 1
         readRegister [b|001|]
 
 main2 = do
@@ -31,5 +31,5 @@ main2 = do
     -- singleton list
     replicateM_ 10000 . stToIO . runGBA context $ do
         writeRegister [b|000|] 57
-        execute $ TSR TSRO_LSL 1 0 1
+        execute $ T1 T1_LSL 1 0 1
         readRegister [b|001|]
