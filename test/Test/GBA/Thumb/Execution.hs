@@ -733,6 +733,5 @@ taluAnd6 = testProperty "talu N flag" $
         writeSafeRegister src $ getLarge n1
         writeSafeRegister dest $ getLarge n2
         execute $ TALU TALU_AND src dest
-        result <- readSafeRegister dest
         n <- readStatus statusN
         return $ n == testBit (getLarge n1 .&. getLarge n2) 31
