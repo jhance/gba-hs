@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 library
   ghc-prof-options: -O2 -auto-all
-  ghc-options: -O2 -ddump-to-file -fllvm
+  ghc-options: -O2 -ddump-to-file -fllvm -threaded
   exposed-modules:     
                        Game.GBA.Boot
                      , Game.GBA.Thumb.Execution
@@ -44,7 +44,7 @@ library
 
 test-suite test
   type:              exitcode-stdio-1.0
-  ghc-options: -O2 -fllvm
+  ghc-options: -O2 -fllvm -threaded
   default-language:  Haskell2010
   hs-source-dirs:      test
   main-is:             Main.hs
@@ -62,7 +62,7 @@ test-suite test
                      , tasty-quickcheck
 
 benchmark bench
-  ghc-options: -O2 -fllvm
+  ghc-options: -O2 -fllvm -threaded
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   hs-source-dirs:    bench

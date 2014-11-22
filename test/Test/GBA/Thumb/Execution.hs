@@ -130,6 +130,9 @@ tests = testGroup "execution"
       [ testGroup "and (t4.1)"
           [ taluAnd1
           , taluAnd2
+          , taluAnd3
+          , taluAnd4
+          , taluAnd5
           ]
       ]
     ]
@@ -692,3 +695,33 @@ taluAnd2 = testProperty "talu and correctly sets register (src == dest)" $
         execute $ TALU TALU_AND r r
         result <- readSafeRegister r
         return $ result == n
+
+taluAnd3 :: TestTree
+taluAnd3 = testProperty "talu Z flag" $ do
+    \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
+        writeSafeRegister src n1
+        writeSafeRegister dest n2
+        execute $ TALU TALU_AND src dest
+        result <- readSafeRegister dest
+        z <- readStatus statusZ
+        return $ z == (result == 0)
+
+taluAnd4 :: TestTree
+taluAnd4 = testProperty "talu Z flag set with zero src" $ do
+    \(n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
+        let n1 = 0
+        writeSafeRegister src n1
+        writeSafeRegister dest n2
+        execute $ TALU TALU_AND src dest
+        result <- readSafeRegister dest
+        readStatus statusZ
+
+taluAnd5 :: TestTree
+taluAnd5 = testProperty "talu Z flag set with zero dest" $ do
+    \(n1, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
+        let n2 = 0
+        writeSafeRegister src n1
+        writeSafeRegister dest n2
+        execute $ TALU TALU_AND src dest
+        result <- readSafeRegister dest
+        readStatus statusZ
