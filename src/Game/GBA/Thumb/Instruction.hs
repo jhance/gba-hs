@@ -81,7 +81,7 @@ data TInstruction =
     | TMCAS -- Move, compare, add, or subtract. (t3)
         TMCASOpcode -- Opcode, one of MOV, CMP, ADD, SUB (2 bits)
         {-# UNPACK #-} !RegisterID -- Destination register
-        {-# UNPACK #-} !Word8 -- Unsigned immediate (8 bits)
+        {-# UNPACK #-} !Word32 -- Unsigned immediate (8 bits)
     | TALU
         TALUOpcode -- Opcode. Many options. (4 bits)
         {-# UNPACK #-} !RegisterID -- Source register

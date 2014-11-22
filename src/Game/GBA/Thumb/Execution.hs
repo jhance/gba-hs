@@ -3,6 +3,7 @@ module Game.GBA.Thumb.Execution
 where
 
 import           Control.Applicative
+import           Control.Monad
 import           Data.Bits
 import           Data.Word
 import           Game.GBA.Thumb.Instruction
@@ -81,6 +82,33 @@ tasConvert :: TASOperation -> Word32 -> Word32
 tasConvert TASO_ADD x = x
 tasConvert TASO_SUB x = complement x + 1
 
+-- t3
+-----
+executeT3 :: TMCASOpcode -> RegisterID -> Word32 -> GBA s ()
+executeT3 TMCASO_MOV reg num = do
+    writeSafeRegister reg num
+    setZero num
+    -- num is 8 bit unsigned - it can't have a sign bit = 1.
+    writeStatus statusN False
+executeT3 TMCASO_ADD reg num = do
+    val <- readSafeRegister reg
+    let result = val + num
+        pos = not $ testBit val 31
+    setZero result
+    setSign result
+    writeStatus statusC $ result < val
+    writeStatus statusN $ pos && testBit result 31
+    writeSafeRegister reg result
+executeT3 opcode reg num = do -- cmp, sub
+    val <- readSafeRegister reg
+    let result = val + complement num + 1
+        neg = testBit val 31
+    setZero result
+    setSign result
+    writeStatus statusC $ val >= num
+    writeStatus statusV $ neg && not (testBit result 31)
+    when (opcode ==  TMCASO_SUB) $ writeSafeRegister reg result
+
 -- | Execution of any Thumb mode instruction.
 -- Please do not try to execute outside of Thumb mode.
 -- There is no check.
@@ -89,3 +117,5 @@ execute (TSR opcode offset src dest) =
     executeT1 opcode offset src dest
 execute (TAS srcType opType operand source dest) =
     executeT2 srcType opType operand source dest
+execute (TMCAS opcode dest num) =
+    executeT3 opcode dest num

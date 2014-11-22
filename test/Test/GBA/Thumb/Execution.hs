@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RankNTypes #-}
 module Test.GBA.Thumb.Execution
@@ -17,19 +18,36 @@ import           Game.GBA.Register
 import           Game.GBA.Thumb.Instruction
 import           Game.GBA.Thumb.Execution
 
-import           Test.HUnit
+import           Test.HUnit hiding (assert)
 import           Test.Tasty (TestTree, testGroup)
 import           Test.Tasty.HUnit (testCase)
+import           Test.Tasty.QuickCheck (testProperty)
+import           Test.QuickCheck
+import           Test.QuickCheck.Monadic
+import           Test.QuickCheck.Modifiers
 
-runTest :: (forall s. GBA s a) -> IO a
+-- | A register from 0 to 7.
+newtype ThumbRegister = ThumbRegister RegisterID
+    deriving (Read, Show, Eq, Ord)
+
+instance Arbitrary ThumbRegister where
+    arbitrary = ThumbRegister . (`rem` 8) . getNonNegative <$> arbitrary
+    shrink = const []
+
+runTest :: GBA RealWorld a -> IO a
 runTest gba = stToIO $ do
+    context <- makeGBAContext
+    runGBA context (bootForTest Thumb >> gba)
+
+runPure :: forall a. (forall s. GBA s a) -> a
+runPure gba = runST $ do
     context <- makeGBAContext
     runGBA context (bootForTest Thumb >> gba)
 
 tests :: TestTree
 tests = testGroup "execution"
-    [ testGroup "shift register (t1)" $
-      [ testGroup "lsl (t1.1)" $ 
+    [ testGroup "shift register (t1)"
+      [ testGroup "lsl (t1.1)" 
           [ shiftRegLSL1
           , shiftRegLSL2
           , shiftRegLSL3
@@ -39,30 +57,61 @@ tests = testGroup "execution"
           , shiftRegLSL7
           , shiftRegLSL8
           ]
-      , testGroup "lsr (t1.2)" $
+      , testGroup "lsr (t1.2)"
           [ shiftRegLSR1
           , shiftRegLSR2
           , shiftRegLSR3
           , shiftRegLSR4
           , shiftRegLSR5
           ]
-      , testGroup "asr (t1.3)" $
+      , testGroup "asr (t1.3)"
           [ shiftRegASR1
           , shiftRegASR2
           , shiftRegASR3
           , shiftRegASR4
           ]
       ]
-    , testGroup "add/subtract (t2)" $
-      [ testGroup "add (t2.1)" $
+    , testGroup "add/subtract (t2)"
+      [ testGroup "add (t2.1)"
           [ tasAdd1
           , tasAdd2
           , tasAdd3
           , tasAdd4
           ]
-      , testGroup "subtract (t2.2)" $
-          [tasSub1
+      , testGroup "subtract (t2.2)"
+          [ tasSub1
           --, tasSub2
+          ]
+      ]
+    , testGroup "mov, cmp, add, subtract, 8-bit literal (t3)"
+      [ testGroup "mov (t3.1)"
+          [ tmcasMov1
+          , tmcasMov2
+          , tmcasMov3
+          , tmcasMov4
+          ]
+      , testGroup "cmp (t3.2)"
+          [ tmcasCmp1
+          , tmcasCmp2
+          , tmcasCmp3
+          , tmcasCmp4
+          , tmcasCmp5
+          , tmcasCmp6
+          , tmcasCmp7
+          , tmcasCmp8
+          , tmcasCmp9
+          , tmcasCmp10
+          , tmcasCmp11
+          , tmcasCmp12
+          , tmcasCmp13
+          ]
+      , testGroup "add (t3.3)"
+          [
+          ]
+      -- sub is basically cmp but with modified out register
+      -- so testing it extensively is fairly pointless
+      , testGroup "sub (t3.4)"
+          [
           ]
       ]
     ]
@@ -337,8 +386,8 @@ tasAdd4 = testCase "tas add simple register, nonsigned overflow" $ do
 tasSub1 :: TestTree
 tasSub1 = testCase "tas sub simple register" $ do
     (dest, c, z, n, v) <- runTest $ do
-        writeRegister [b|000|] $ 5
-        writeRegister [b|010|] $ 3
+        writeRegister [b|000|] 5
+        writeRegister [b|010|] 3
         execute (TAS TASO_REG TASO_SUB [b|010|] [b|000|] [b|001|])
         getTASResult [b|001|]
     dest @?= 2
@@ -346,3 +395,140 @@ tasSub1 = testCase "tas sub simple register" $ do
     z @?= False
     n @?= False
     v @?= False
+
+-- t3
+-----
+
+-- t3.1
+-------
+tmcasMov1 :: TestTree
+tmcasMov1 = testProperty "tmcas mov always clears status-N" . monadicIO $ do
+    num <- pick arbitrary
+    n <- run . runTest $ do
+        writeSafeRegister [b|000|] 5
+        execute $ TMCAS TMCASO_MOV [b|000|] num
+        readStatus statusN
+    assert $ not n
+
+tmcasMov2 :: TestTree
+tmcasMov2 = testProperty "tmcas mov sets register to value" . monadicIO $ do
+    num <- pick arbitrary
+    n <- run . runTest $ do
+        writeSafeRegister [b|000|] 5
+        execute $ TMCAS TMCASO_MOV [b|000|] num
+        readSafeRegister [b|000|]
+    assert $ n == num
+
+tmcasMov3 :: TestTree
+tmcasMov3 = testCase "tmcas mov zero" $ do
+    z <- runTest $ do
+        writeSafeRegister [b|000|] 5
+        execute $ TMCAS TMCASO_MOV [b|000|] 0
+        readStatus statusZ
+    z @?= True
+
+tmcasMov4 :: TestTree
+tmcasMov4 = testCase "tmcas mov nonzero" $ do
+    z <- runTest $ do
+        writeSafeRegister [b|000|] 5
+        execute $ TMCAS TMCASO_MOV [b|000|] 10
+        readStatus statusZ
+    z @?= False
+
+-- t3.2
+-------
+tmcasCmp1 :: TestTree
+tmcasCmp1 = testProperty "tmcas cmp does not change register" $
+  \(n, (ThumbRegister r), k :: Word8) -> runPure $ do
+      writeSafeRegister r n
+      execute $ TMCAS TMCASO_CMP r (fromIntegral k)
+      n' <- readSafeRegister r
+      return $ n == n'
+            
+tmcasCmp2 :: TestTree
+tmcasCmp2 = testProperty "tmcas cmp Z flag equal" $
+    \(n :: Word8, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r $ fromIntegral n
+        execute $ TMCAS TMCASO_CMP r (fromIntegral n)
+        readStatus statusZ
+
+tmcasCmp3 :: TestTree
+tmcasCmp3 = testProperty "tmcas cmp Z flag nonequal" $
+    \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n /= k ==> runPure $ do
+        writeSafeRegister r $ fromIntegral n
+        execute $ TMCAS TMCASO_CMP r (fromIntegral k)
+        not <$> readStatus statusZ
+
+tmcasCmp4 :: TestTree
+tmcasCmp4 = testProperty "tmcas cmp C flag equal" $
+    \(n :: Word8, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r $ fromIntegral n
+        execute $ TMCAS TMCASO_CMP r (fromIntegral n)
+        readStatus statusC
+
+tmcasCmp5 :: TestTree
+tmcasCmp5 = testProperty "tmcas cmp C flag gte" $
+    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> n > fromIntegral k ==> runPure $ do
+        writeSafeRegister r n
+        execute $ TMCAS TMCASO_CMP r (fromIntegral k)
+        readStatus statusC
+
+tmcasCmp6 :: TestTree
+tmcasCmp6 = testProperty "tmcas cmp C flag lte" $
+    \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n < k ==> runPure $ do
+        writeSafeRegister r (fromIntegral n)
+        execute $ TMCAS TMCASO_CMP r (fromIntegral k)
+        not <$> readStatus statusC
+
+tmcasCmp7 :: TestTree
+tmcasCmp7 = testCase "tmcas cmp V flag on overflow" $ do
+    v <- runTest $ do
+        writeSafeRegister 0 [b|10000000 00000000 00000000 00000111|]
+        execute $ TMCAS TMCASO_CMP 0 [b|1000|]
+        readStatus statusV
+    v @?= True
+
+tmcasCmp8 :: TestTree
+tmcasCmp8 = testCase "tmcas cmp V flag on no overflow" $ do
+    v <- runTest $ do
+        writeSafeRegister 1 [b|11111111 11111111 11111111 11111100|]
+        execute $ TMCAS TMCASO_CMP 1 [b|11|]
+        readStatus statusV
+    v @?= False
+
+tmcasCmp9 :: TestTree
+tmcasCmp9 = testProperty "tmcas cmp N flag with two positive, set to 1" $
+    \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n < k ==> runPure $ do
+        writeSafeRegister r (fromIntegral n)
+        execute $ TMCAS TMCASO_CMP r (fromIntegral k)
+        readStatus statusN
+
+tmcasCmp10 :: TestTree
+tmcasCmp10 = testProperty "tmcas cmp N flag with two positive, set to 0" $
+    \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n > k ==> runPure $ do
+        writeSafeRegister r (fromIntegral n)
+        execute $ TMCAS TMCASO_CMP r (fromIntegral k)
+        not <$> readStatus statusN
+
+tmcasCmp11 :: TestTree
+tmcasCmp11 = testProperty "tmcas cmp N flag with two equal, set to 0" $
+    \(n :: Word8, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r (fromIntegral n)
+        execute $ TMCAS TMCASO_CMP r (fromIntegral n)
+        not <$> readStatus statusN
+
+tmcasCmp12 :: TestTree
+tmcasCmp12 = testCase "tmcas cmp N flag with negative, set to 1" $ do
+    n <- runTest $ do
+        writeSafeRegister 0 [b|10000000 00000000 00000000 00000111|]
+        execute $ TMCAS TMCASO_CMP 0 [b|11|]
+        readStatus statusN
+    n @?= True
+
+tmcasCmp13 :: TestTree
+tmcasCmp13 = testCase "tmcas cmp N flag with negative, set to 0" $ do
+    n <- runTest $ do
+        writeSafeRegister 1 [b|10000000 00000000 00000000 00000111|]
+        execute $ TMCAS TMCASO_CMP 1 [b|1111|]
+        readStatus statusN
+    n @?= False
