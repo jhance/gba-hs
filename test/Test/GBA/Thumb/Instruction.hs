@@ -21,13 +21,13 @@ tests = testGroup "parser" $
         , shiftReg5
         , shiftReg6
         ]
-    , testGroup "add/subtract (t2)"
+    , testGroup "add, sub (t2)"
         [ tas1
         , tas2
         , tas3
         , tas4
         ]
-    , testGroup "move/compare/add/subtract immediate (t3)"
+    , testGroup "mov, cmp, add, sub literal (t3)"
         [ tmcas1
         , tmcas2
         , tmcas3

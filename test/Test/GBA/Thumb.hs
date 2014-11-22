@@ -7,7 +7,7 @@ import qualified Test.GBA.Thumb.Instruction as T1
 import qualified Test.GBA.Thumb.Execution as T2
 
 tests :: TestTree
-tests = testGroup "thumb instructions" $
+tests = testGroup "thumb" $
             [ T1.tests
             , T2.tests
             ]

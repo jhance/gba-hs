@@ -71,14 +71,14 @@ tests = testGroup "execution"
           , shiftRegASR4
           ]
       ]
-    , testGroup "add/subtract (t2)"
+    , testGroup "add, sub (t2)"
       [ testGroup "add (t2.1)"
           [ tasAdd1
           , tasAdd2
           , tasAdd3
           , tasAdd4
           ]
-      , testGroup "subtract (t2.2)"
+      , testGroup "sub (t2.2)"
           [ tasSub1
           --, tasSub2
           ]
@@ -113,6 +113,12 @@ tests = testGroup "execution"
           , tmcasAdd5
           , tmcasAdd6
           , tmcasAdd7
+          , tmcasAdd8
+          , tmcasAdd9
+          , tmcasAdd10
+          , tmcasAdd11
+          , tmcasAdd12
+          , tmcasAdd13
           ]
       -- sub is basically cmp but with modified out register
       -- so testing it extensively is fairly pointless
@@ -551,7 +557,7 @@ tmcasAdd1 = testProperty "tmcas add correctly sets register" $
         return $ result == n + fromIntegral k
 
 tmcasAdd2 :: TestTree
-tmcasAdd2 = testProperty "tmcas add Z flag, set to 1" $ do
+tmcasAdd2 = testProperty "tmcas add Z flag, set to 1" $
     \(k :: Word8, (ThumbRegister r)) -> runPure $ do
         let k' = fromIntegral k :: Word32
         writeSafeRegister r (maxBound - k' + 1)
@@ -559,7 +565,7 @@ tmcasAdd2 = testProperty "tmcas add Z flag, set to 1" $ do
         readStatus statusZ
 
 tmcasAdd3 :: TestTree
-tmcasAdd3 = testProperty "tmcas add Z flag, set to 0" $ do
+tmcasAdd3 = testProperty "tmcas add Z flag, set to 0" $
     \(n :: Word32, k :: Word8, (ThumbRegister r)) -> n + fromIntegral k /= 0 ==> runPure $ do
         writeSafeRegister r n
         execute $ TMCAS TMCASO_ADD r (fromIntegral k)
@@ -574,14 +580,14 @@ tmcasAdd4 = testCase "tmcas add Z flag, 0 + 0 = 0" $ do
     z @?= True
 
 tmcasAdd5 :: TestTree
-tmcasAdd5 = testProperty "tmcas add C flag, for small values" $ do
+tmcasAdd5 = testProperty "tmcas add C flag, for small values" $
     \(n :: Word16, k :: Word8, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r (fromIntegral n)
         execute $ TMCAS TMCASO_ADD r (fromIntegral k)
         not <$> readStatus statusC
 
 tmcasAdd6 :: TestTree
-tmcasAdd6 = testProperty "tmcas add C flag, for large values" $ do
+tmcasAdd6 = testProperty "tmcas add C flag, for large values" $
     \(n :: Word8, k :: Word8, (ThumbRegister r)) -> n < k ==> runPure $ do
         let n' = maxBound - fromIntegral n :: Word32
         writeSafeRegister r n'
@@ -589,12 +595,62 @@ tmcasAdd6 = testProperty "tmcas add C flag, for large values" $ do
         readStatus statusC
 
 tmcasAdd7 :: TestTree
-tmcasAdd7 = testProperty "tmcas add C flag, when zero" $ do
+tmcasAdd7 = testProperty "tmcas add C flag, when zero" $
     \(k :: Word8, (ThumbRegister r)) -> k /= 0 ==> runPure $ do
         let k' = fromIntegral k :: Word32
         writeSafeRegister r (maxBound - k' + 1)
         execute $ TMCAS TMCASO_ADD r k'
         readStatus statusC
+
+tmcasAdd8 :: TestTree
+tmcasAdd8 = testProperty "tmcas add V flag is 0 when register is negative" $
+    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r $ setBit n 31
+        execute $ TMCAS TMCASO_ADD r (fromIntegral k)
+        not <$> readStatus statusV
+
+tmcasAdd9 :: TestTree
+tmcasAdd9 = testProperty "tmcas add V flag is 0 when literal is 0" $
+    \(n :: Word32, (ThumbRegister r)) -> runPure $ do
+        writeSafeRegister r n
+        execute $ TMCAS TMCASO_ADD r 0
+        not <$> readStatus statusV
+
+tmcasAdd10 :: TestTree
+tmcasAdd10 = testCase "tmcas add V flag, set to 0" $ do
+    v <- runTest $ do
+        writeSafeRegister [b|000|] [b|01111111 11111111 11111111 11111110|]
+        execute $ TMCAS TMCASO_ADD [b|000|] [b|1|]
+        readStatus statusV
+    v @?= False
+
+tmcasAdd11 :: TestTree
+tmcasAdd11 = testCase "tmcas add V flag, set to 1" $ do
+    v <- runTest $ do
+        writeSafeRegister [b|000|] [b|01111111 11111111 11111111 11111110|]
+        execute $ TMCAS TMCASO_ADD [b|000|] [b|10|]
+        readStatus statusV
+    v @?= True
+
+tmcasAdd12 :: TestTree
+tmcasAdd12 = testProperty "tmcas add N flag" $
+    \(n :: Word32, k :: Word8, (ThumbRegister r)) -> runPure $ do
+        let k' = fromIntegral k :: Word32
+        writeSafeRegister r n
+        execute $ TMCAS TMCASO_ADD r k'
+        result <- readSafeRegister r
+        sn <- readStatus statusN
+        return $ sn == testBit (n + k') 31
+
+tmcasAdd13 :: TestTree
+tmcasAdd13 = testProperty "tmcas add N flag (large)" $
+    \(n, k :: Word8, (ThumbRegister r)) -> runPure $ do
+        let k' = fromIntegral k :: Word32
+        writeSafeRegister r $ getLarge n
+        execute $ TMCAS TMCASO_ADD r k'
+        result <- readSafeRegister r
+        sn <- readStatus statusN
+        return $ sn == testBit (getLarge n + k') 31
 
 -- t3.4
 -------

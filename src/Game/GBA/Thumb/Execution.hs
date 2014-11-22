@@ -45,6 +45,7 @@ executeT1 TSRO_ASR n src dest = do
     val <- readRegister src
     let val' = shiftR val n'
         val'' = if testBit val 31
+                    -- set left-most n bits to 1
                     then shiftL (complement 0) (32 - n') + val'
                     else val'
     writeRegister dest val''
@@ -97,7 +98,7 @@ executeT3 TMCASO_ADD reg num = do
     setZero result
     setSign result
     writeStatus statusC $ result < val
-    writeStatus statusN $ pos && testBit result 31
+    writeStatus statusV $ pos && testBit result 31
     writeSafeRegister reg result
 executeT3 opcode reg num = do -- cmp, sub
     val <- readSafeRegister reg
