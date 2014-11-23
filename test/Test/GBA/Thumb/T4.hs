@@ -88,6 +88,14 @@ tests = testGroup "[t4] alu operations"
         , t4adc6a
         , t4adc6b
         ]
+    , testGroup "[t4.7] sbc"
+        [ t4sbc1
+        , t4sbc2a
+        , t4sbc2b
+        , t4sbc2c
+        , t4sbc2d
+        , t4sbc2e
+        ]
     ]
 
 t4parser1 :: TestTree
@@ -249,7 +257,7 @@ t4eor4 = testProperty "eor Z flag, set to 0" $
 
 -- t4.6
 t4adc1 :: TestTree
-t4adc1 = testProperty "adc correctly sets register (src /= dest)" $
+t4adc1 = testProperty "[t4adc1] correctly sets register (src /= dest)" $
     \(n1, n2, c, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -259,7 +267,7 @@ t4adc1 = testProperty "adc correctly sets register (src /= dest)" $
         return $ result == n1 + n2 + fromIntegral (fromEnum c)
 
 t4adc2a :: TestTree
-t4adc2a = testCase "adc Z flag, set to 0" $ do
+t4adc2a = testCase "[t4adc2a] Z flag, set to 0" $ do
     z <- runTest $ do
         writeSafeRegister 0 4
         writeSafeRegister 1 5
@@ -270,7 +278,7 @@ t4adc2a = testCase "adc Z flag, set to 0" $ do
     z @?= False
 
 t4adc2b :: TestTree
-t4adc2b = testProperty "adc Z flag, set to 0, with no pre-carry" $
+t4adc2b = testProperty "[t4adc2b] Z flag, set to 0, with no pre-carry" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) ->
       src /= dest && n1 + n2 /= 0 ==> runPure $ do
         writeSafeRegister src n1
@@ -280,7 +288,7 @@ t4adc2b = testProperty "adc Z flag, set to 0, with no pre-carry" $
         not <$> readStatus statusZ
 
 t4adc2c :: TestTree
-t4adc2c = testProperty "adc Z flag, set to 1, with no pre-carry" $
+t4adc2c = testProperty "[t4adc2c] Z flag, set to 1, with no pre-carry" $
     \(n, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n
         writeSafeRegister dest $ maxBound - n + 1
@@ -289,7 +297,7 @@ t4adc2c = testProperty "adc Z flag, set to 1, with no pre-carry" $
         readStatus statusZ
 
 t4adc2d :: TestTree
-t4adc2d = testProperty "adc Z flag, set to 1, with pre-carry" $
+t4adc2d = testProperty "[t4adc2d] Z flag, set to 1, with pre-carry" $
     \(n, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n
         writeSafeRegister dest $ maxBound - n
@@ -298,7 +306,7 @@ t4adc2d = testProperty "adc Z flag, set to 1, with pre-carry" $
         readStatus statusZ
 
 t4adc3a :: TestTree
-t4adc3a = testCase "adc C flag, set to 0" $ do
+t4adc3a = testCase "[t4adc3a] C flag, set to 0" $ do
     c <- runTest $ do
         writeSafeRegister 0 [b|11111111 11111111 11111111 11111110|]
         writeSafeRegister 1 1
@@ -308,7 +316,7 @@ t4adc3a = testCase "adc C flag, set to 0" $ do
     c @?= False
 
 t4adc3b :: TestTree
-t4adc3b = testCase "adc C flag, set to 1" $ do
+t4adc3b = testCase "[t4adc3b] C flag, set to 1" $ do
     c <- runTest $ do
         writeSafeRegister 0 [b|11111111 11111111 11111111 11111110|]
         writeSafeRegister 1 1
@@ -318,7 +326,7 @@ t4adc3b = testCase "adc C flag, set to 1" $ do
     c @?= True
 
 t4adc3c :: TestTree
-t4adc3c = testProperty "adc C flag, set to 0 for small" $
+t4adc3c = testProperty "[t4adc3c] C flag, set to 0 for small" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest), c) -> src /= dest ==> runPure $ do
         let n1' = setBit (clearBit (getLarge n1) 31) 1 - 1
             n2' = clearBit (getLarge n2) 31
@@ -329,7 +337,7 @@ t4adc3c = testProperty "adc C flag, set to 0 for small" $
         not <$> readStatus statusC
 
 t4adc4a :: TestTree
-t4adc4a = testCase "adc N flag, set to 1" $ do
+t4adc4a = testCase "[t4adc4a] N flag, set to 1" $ do
     n <- runTest $ do
         writeSafeRegister 0 [b|01111111 11111111 11111111 11111110|]
         writeSafeRegister 1 1
@@ -339,7 +347,7 @@ t4adc4a = testCase "adc N flag, set to 1" $ do
     n @?= True
 
 t4adc4b :: TestTree
-t4adc4b = testCase "adc N flag, set to 0" $ do
+t4adc4b = testCase "[t4adc4b] N flag, set to 0" $ do
     n <- runTest $ do
         writeSafeRegister 0 [b|01111111 11111111 11111111 11111110|]
         writeSafeRegister 1 1
@@ -349,7 +357,7 @@ t4adc4b = testCase "adc N flag, set to 0" $ do
     n @?= False
 
 t4adc5a :: TestTree
-t4adc5a = testProperty "adc V flag, set to 0 for positive & negative" $
+t4adc5a = testProperty "[t4adc5a] V flag, set to 0 for positive & negative" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest), c) -> src /= dest ==> runPure $ do
         let n1' = setBit (clearBit (getLarge n1) 31) 1
             n2' = clearBit (setBit (getLarge n2) 31) 1
@@ -360,7 +368,7 @@ t4adc5a = testProperty "adc V flag, set to 0 for positive & negative" $
         not <$> readStatus statusV
 
 t4adc5b :: TestTree
-t4adc5b = testCase "adc V flag, set to 1" $ do
+t4adc5b = testCase "[t4adc5b] V flag, set to 1" $ do
     v <- runTest $ do
         writeSafeRegister 0 [b|10000000 00000000 00000000 00000000|]
         writeSafeRegister 1 [b|11111111 11111111 11111111 11111111|]
@@ -370,7 +378,7 @@ t4adc5b = testCase "adc V flag, set to 1" $ do
     v @?= True
 
 t4adc5c :: TestTree
-t4adc5c = testCase "adc V flag, set to 0" $ do
+t4adc5c = testCase "[t4adc5c] V flag, set to 0" $ do
     v <- runTest $ do
         writeSafeRegister 0 [b|10000000 00000000 00000000 00000000|]
         writeSafeRegister 1 [b|11111111 11111111 11111111 11111111|]
@@ -380,7 +388,7 @@ t4adc5c = testCase "adc V flag, set to 0" $ do
     v @?= False
 
 t4adc6a :: TestTree
-t4adc6a = testCase "adc corner case 1" $ do
+t4adc6a = testCase "[t4adc6a] corner case 1" $ do
     r <- runTest $ do
         writeSafeRegister 0 [b|10000000 00000000 00000000 00000000|]
         writeSafeRegister 1 [b|11111111 11111111 11111111 11111111|]
@@ -390,7 +398,7 @@ t4adc6a = testCase "adc corner case 1" $ do
     r @?= [b|01111111 11111111 11111111 11111111|]
 
 t4adc6b :: TestTree
-t4adc6b = testCase "adc corner case 2" $ do
+t4adc6b = testCase "[t4adc6b] corner case 2" $ do
     r <- runTest $ do
         writeSafeRegister 0 [b|10000000 00000000 00000000 00000000|]
         writeSafeRegister 1 [b|11111111 11111111 11111111 11111111|]
@@ -398,3 +406,63 @@ t4adc6b = testCase "adc corner case 2" $ do
         execute $ T4 T4_ADC 0 1
         readSafeRegister 1
     r @?= [b|10000000 00000000 00000000 00000000|]
+
+-- t4.7
+-------
+
+t4sbc1 :: TestTree
+t4sbc1 = testProperty "[t4sbc1] correctly sets register" $
+    \(n1, n2, (ThumbRegister src), (ThumbRegister dest), c) -> src /= dest ==> runPure $ do
+        writeSafeRegister src (getLarge n1)
+        writeSafeRegister dest (getLarge n2)
+        writeStatus statusC c
+        execute $ T4 T4_SBC src dest
+        result <- readSafeRegister dest
+        return $ result == getLarge n1 - getLarge n2 - fromIntegral (fromEnum (not c))
+
+t4sbc2a :: TestTree
+t4sbc2a = testProperty "[t4sbc2a] Z flag, set to 1, carry-in" $
+    \(n, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src (getLarge n)
+        writeSafeRegister dest (getLarge n)
+        writeStatus statusC True
+        execute $ T4 T4_SBC src dest
+        readStatus statusZ
+
+t4sbc2b :: TestTree
+t4sbc2b = testProperty "[t4sbc2b] Z flag, set to 1, no carry-in" $
+    \(n, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src (getLarge n + 1)
+        writeSafeRegister dest (getLarge n)
+        writeStatus statusC False
+        execute $ T4 T4_SBC src dest
+        readStatus statusZ
+
+t4sbc2c :: TestTree
+t4sbc2c = testProperty "[t4sbc2c] Z flag, set to 0, carry-in" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+    src /= dest && n1 /= n2 ==> runPure $ do
+        writeSafeRegister src (getLarge n1)
+        writeSafeRegister dest (getLarge n2)
+        writeStatus statusC True
+        execute $ T4 T4_SBC src dest
+        not <$> readStatus statusZ
+
+t4sbc2d :: TestTree
+t4sbc2d = testProperty "[t4sbc2d] Z flag, set to 0, no carry-in" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+    src /= dest && n1 /= n2 + 1 && n1 /= n2 - 1 ==> runPure $ do
+        writeSafeRegister src (getLarge n1)
+        writeSafeRegister dest (getLarge n2)
+        writeStatus statusC False
+        execute $ T4 T4_SBC src dest
+        not <$> readStatus statusZ
+
+t4sbc2e :: TestTree
+t4sbc2e = testProperty "[t4sbc2e] Z flag, set to 0, equal, no carry-in" $
+    \(n, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src (getLarge n)
+        writeSafeRegister dest (getLarge n)
+        writeStatus statusC False
+        execute $ T4 T4_SBC src dest
+        not <$> readStatus statusZ
