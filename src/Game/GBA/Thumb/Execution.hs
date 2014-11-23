@@ -107,6 +107,7 @@ executeT3 opcode reg num = do -- cmp, sub
     writeStatus statusV $ neg && not (testBit result 31)
     when (opcode ==  T3_SUB) $ writeSafeRegister reg result
 
+-- (warning: long, 16 cases for opcode...)
 -- t4
 -----
 executeT4 :: T4Opcode -> RegisterID -> RegisterID -> GBA s ()
@@ -116,6 +117,37 @@ executeT4 T4_AND src dest = do
     let result = in1 .&. in2
     setZero result
     setSign result
+    writeSafeRegister dest result
+executeT4 T4_EOR src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    let result = in1 `xor` in2
+    setZero result
+    setSign result
+    writeSafeRegister dest result
+executeT4 T4_ADC src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    c <- fromIntegral . fromEnum <$> readStatus statusC
+    let result = in1 + in2 + c
+        sign = testBit in1 31
+        sameSign = sign == testBit in2 31
+    setZero result
+    setSign result
+    writeStatus statusC $ result < in1 || (result == in1 && c /= 0)
+    writeStatus statusV $ sameSign && sign /= testBit result 31
+    writeSafeRegister dest result
+executeT4 T4_SBC src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    c <- fromIntegral . fromEnum . not <$> readStatus statusC
+    let result = in1 - in2 - c
+        sign = testBit in1 31
+        difSign = sign /= testBit in2 31
+    setZero result
+    setSign result
+    writeStatus statusC $ in1 >= in2 + c
+    writeStatus statusV $ difSign && sign /= testBit result 31
     writeSafeRegister dest result
 
 -- | Execution of any Thumb mode instruction.

@@ -7,7 +7,8 @@ import           Test.Tasty
 import           Test.Tasty.Ingredients.Rerun
 
 main :: IO ()
-main = defaultMainWithIngredients [rerunningTests defaultIngredients] tests
+--main = defaultMainWithIngredients [rerunningTests defaultIngredients] tests
+main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "testsuite" [T1.tests, T2.tests]

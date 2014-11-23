@@ -59,7 +59,6 @@ test-suite test
                      , binary-literal-qq
                      , gba
                      , tasty
-                     , tasty-rerun
                      , HUnit
                      , tasty-hunit
                      , QuickCheck
