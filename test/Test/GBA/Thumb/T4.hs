@@ -44,18 +44,23 @@ tests = testGroup "[t4] alu operations"
         , t4parser16
         ]
     , testGroup "[t4.1] and"
-        [ t4and1
-        , t4and2
-        , t4and3
-        , t4and4
-        , t4and5
-        , t4and6
+        [ t4and1a
+        , t4and1b
+
+        , t4and2a
+        , t4and2b
+        , t4and2c
+
+        , t4and3a
         ]
     , testGroup "[t4.2] eor"
-        [ t4eor1
-        , t4eor2
-        , t4eor3
-        , t4eor4
+        [ t4eor1a
+        , t4eor1b
+
+        , t4eor2a
+        , t4eor2b
+
+        , t4eor3a
         ]
     , testGroup "[t4.3] lsl"
         [
@@ -67,7 +72,7 @@ tests = testGroup "[t4] alu operations"
         [
         ]
     , testGroup "[t4.6] adc"
-        [ t4adc1
+        [ t4adc1a
 
         , t4adc2a
         , t4adc2b
@@ -89,83 +94,85 @@ tests = testGroup "[t4] alu operations"
         , t4adc6b
         ]
     , testGroup "[t4.7] sbc"
-        [ t4sbc1
+        [ t4sbc1a
         , t4sbc2a
+
         , t4sbc2b
         , t4sbc2c
         , t4sbc2d
+
         , t4sbc2e
         ]
     ]
 
 t4parser1 :: TestTree
-t4parser1 = testCase "and" $ parseT [b|010000 0000 010 100|]
+t4parser1 = testCase "[t4parser1] and" $ parseT [b|010000 0000 010 100|]
     @?= T4 T4_AND [b|010|] [b|100|]
 
 t4parser2 :: TestTree
-t4parser2 = testCase "eor" $ parseT [b|010000 0001 010 100|]
+t4parser2 = testCase "[t4parser2] eor" $ parseT [b|010000 0001 010 100|]
     @?= T4 T4_EOR [b|010|] [b|100|]
 
 t4parser3 :: TestTree
-t4parser3 = testCase "lsl" $ parseT [b|010000 0010 010 100|]
+t4parser3 = testCase "[t4parser3] lsl" $ parseT [b|010000 0010 010 100|]
     @?= T4 T4_LSL [b|010|] [b|100|]
 
 t4parser4 :: TestTree
-t4parser4 = testCase "lsr" $ parseT [b|010000 0011 010 100|]
+t4parser4 = testCase "[t4parser4] lsr" $ parseT [b|010000 0011 010 100|]
     @?= T4 T4_LSR [b|010|] [b|100|]
 
 t4parser5 :: TestTree
-t4parser5 = testCase "asr" $ parseT [b|010000 0100 011 101|]
+t4parser5 = testCase "[t4parser5] asr" $ parseT [b|010000 0100 011 101|]
     @?= T4 T4_ASR [b|011|] [b|101|]
 
 t4parser6 :: TestTree
-t4parser6 = testCase "adc" $ parseT [b|010000 0101 011 101|]
+t4parser6 = testCase "[t4parser6] adc" $ parseT [b|010000 0101 011 101|]
     @?= T4 T4_ADC [b|011|] [b|101|]
 
 t4parser7 :: TestTree
-t4parser7 = testCase "sbc" $ parseT [b|010000 0110 011 101|]
+t4parser7 = testCase "[t4parser7] sbc" $ parseT [b|010000 0110 011 101|]
     @?= T4 T4_SBC [b|011|] [b|101|]
 
 t4parser8 :: TestTree
-t4parser8 = testCase "ror" $ parseT [b|010000 0111 011 101|]
+t4parser8 = testCase "[t4parser8] ror" $ parseT [b|010000 0111 011 101|]
     @?= T4 T4_ROR [b|011|] [b|101|]
 
 t4parser9 :: TestTree
-t4parser9 = testCase "tst" $ parseT [b|010000 1000 011 101|]
+t4parser9 = testCase "[t4parser9] tst" $ parseT [b|010000 1000 011 101|]
     @?= T4 T4_TST [b|011|] [b|101|]
 
 t4parser10 :: TestTree
-t4parser10 = testCase "neg" $ parseT [b|010000 1001 011 101|]
+t4parser10 = testCase "[t4parser10] neg" $ parseT [b|010000 1001 011 101|]
     @?= T4 T4_NEG [b|011|] [b|101|]
 
 t4parser11 :: TestTree
-t4parser11 = testCase "sbc" $ parseT [b|010000 1010 011 101|]
+t4parser11 = testCase "[t4parser11] sbc" $ parseT [b|010000 1010 011 101|]
     @?= T4 T4_CMP [b|011|] [b|101|]
 
 t4parser12 :: TestTree
-t4parser12 = testCase "ror" $ parseT [b|010000 1011 011 101|]
+t4parser12 = testCase "[t4parser12] ror" $ parseT [b|010000 1011 011 101|]
     @?= T4 T4_CMN [b|011|] [b|101|]
 
 t4parser13 :: TestTree
-t4parser13 = testCase "orr" $ parseT [b|010000 1100 011 101|]
+t4parser13 = testCase "[t4parser13] orr" $ parseT [b|010000 1100 011 101|]
     @?= T4 T4_ORR [b|011|] [b|101|]
 
 t4parser14 :: TestTree
-t4parser14 = testCase "mul" $ parseT [b|010000 1101 011 101|]
+t4parser14 = testCase "[t4parser14] mul" $ parseT [b|010000 1101 011 101|]
     @?= T4 T4_MUL [b|011|] [b|101|]
 
 t4parser15 :: TestTree
-t4parser15 = testCase "bic" $ parseT [b|010000 1110 011 101|]
+t4parser15 = testCase "[t4parser15] bic" $ parseT [b|010000 1110 011 101|]
     @?= T4 T4_BIC [b|011|] [b|101|]
 
 t4parser16 :: TestTree
-t4parser16 = testCase "mvn" $ parseT [b|010000 1111 011 101|]
+t4parser16 = testCase "[t4parser16] mvn" $ parseT [b|010000 1111 011 101|]
     @?= T4 T4_MVN [b|011|] [b|101|]
 
 -- t4.1
 -------
-t4and1 :: TestTree
-t4and1 = testProperty "and correctly sets register (src /= dest)" $
+t4and1a :: TestTree
+t4and1a = testProperty "[t4and1a] correctly sets register (src /= dest)" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -173,16 +180,16 @@ t4and1 = testProperty "and correctly sets register (src /= dest)" $
         result <- readSafeRegister dest
         return $ result == n1 .&. n2
 
-t4and2 :: TestTree
-t4and2 = testProperty "and correctly sets register (src == dest)" $
+t4and1b :: TestTree
+t4and1b = testProperty "[t4and1b] correctly sets register (src == dest)" $
     \(n, (ThumbRegister r)) -> runPure $ do
         writeSafeRegister r n
         execute $ T4 T4_AND r r
         result <- readSafeRegister r
         return $ result == n
 
-t4and3 :: TestTree
-t4and3 = testProperty "and Z flag" $
+t4and2a :: TestTree
+t4and2a = testProperty "[t4and2a] Z flag" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -191,8 +198,8 @@ t4and3 = testProperty "and Z flag" $
         z <- readStatus statusZ
         return $ z == (result == 0)
 
-t4and4 :: TestTree
-t4and4 = testProperty "and Z flag set with zero src" $
+t4and2b :: TestTree
+t4and2b = testProperty "[t4and2b] Z flag set with zero src" $
     \(n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         let n1 = 0
         writeSafeRegister src n1
@@ -201,8 +208,8 @@ t4and4 = testProperty "and Z flag set with zero src" $
         result <- readSafeRegister dest
         readStatus statusZ
 
-t4and5 :: TestTree
-t4and5 = testProperty "and Z flag set with zero dest" $
+t4and2c :: TestTree
+t4and2c = testProperty "[t4and2c] Z flag set with zero dest" $
     \(n1, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         let n2 = 0
         writeSafeRegister src n1
@@ -211,8 +218,8 @@ t4and5 = testProperty "and Z flag set with zero dest" $
         result <- readSafeRegister dest
         readStatus statusZ
 
-t4and6 :: TestTree
-t4and6 = testProperty "and N flag" $
+t4and3a :: TestTree
+t4and3a = testProperty "[t3and3a] N flag" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src $ getLarge n1
         writeSafeRegister dest $ getLarge n2
@@ -220,34 +227,34 @@ t4and6 = testProperty "and N flag" $
         n <- readStatus statusN
         return $ n == testBit (getLarge n1 .&. getLarge n2) 31
 
-t4eor1 :: TestTree
-t4eor1 = testProperty "eor correctly sets register (src /= dest)" $
+t4eor1a :: TestTree
+t4eor1a = testProperty "[t4eor1a] correctly sets register (src /= dest)" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
-        writeSafeRegister src n1
-        writeSafeRegister dest n2
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
         execute $ T4 T4_EOR src dest
         result <- readSafeRegister dest
-        return $ result == n1 `xor` n2
+        return $ result == getLarge n1 `xor` getLarge n2
 
-t4eor2 :: TestTree
-t4eor2 = testProperty "eor correctly sets register (src == dest)" $
+t4eor1b :: TestTree
+t4eor1b = testProperty "[t4eor1b] correctly sets register (src == dest)" $
     \(n, (ThumbRegister src)) -> runPure $ do
-        writeSafeRegister src n
-        writeSafeRegister src n
+        writeSafeRegister src $ getLarge n
+        writeSafeRegister src $ getLarge n
         execute $ T4 T4_EOR src src
         result <- readSafeRegister src
         return $ result == 0
 
-t4eor3 :: TestTree
-t4eor3 = testProperty "eor Z flag, set to 1" $
+t4eor2a :: TestTree
+t4eor2a = testProperty "[t4eor2a] Z flag, set to 1" $
     \(n, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n
         writeSafeRegister dest n
         execute $ T4 T4_EOR src dest
         readStatus statusZ
 
-t4eor4 :: TestTree
-t4eor4 = testProperty "eor Z flag, set to 0" $
+t4eor2b :: TestTree
+t4eor2b = testProperty "[t4eor2b] Z flag, set to 0" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest)) ->
       src /= dest && n1 /= n2 ==> runPure $ do
         writeSafeRegister src n1
@@ -255,9 +262,18 @@ t4eor4 = testProperty "eor Z flag, set to 0" $
         execute $ T4 T4_EOR src dest
         not <$> readStatus statusZ
 
+t4eor3a :: TestTree
+t4eor3a = testProperty "[t4eor3a] N flag" $
+    \(n1, n2, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_EOR src dest
+        n <- readStatus statusN
+        return $ n == testBit (getLarge n1 `xor` getLarge n2) 31
+
 -- t4.6
-t4adc1 :: TestTree
-t4adc1 = testProperty "[t4adc1] correctly sets register (src /= dest)" $
+t4adc1a :: TestTree
+t4adc1a = testProperty "[t4adc1a] correctly sets register (src /= dest)" $
     \(n1, n2, c, (ThumbRegister src), (ThumbRegister dest)) -> src /= dest ==> runPure $ do
         writeSafeRegister src n1
         writeSafeRegister dest n2
@@ -410,8 +426,8 @@ t4adc6b = testCase "[t4adc6b] corner case 2" $ do
 -- t4.7
 -------
 
-t4sbc1 :: TestTree
-t4sbc1 = testProperty "[t4sbc1] correctly sets register" $
+t4sbc1a :: TestTree
+t4sbc1a = testProperty "[t4sbc1a] correctly sets register" $
     \(n1, n2, (ThumbRegister src), (ThumbRegister dest), c) -> src /= dest ==> runPure $ do
         writeSafeRegister src (getLarge n1)
         writeSafeRegister dest (getLarge n2)
