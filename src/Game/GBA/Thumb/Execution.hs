@@ -140,13 +140,14 @@ executeT4 T4_ADC src dest = do
 executeT4 T4_SBC src dest = do
     in1 <- readSafeRegister src
     in2 <- readSafeRegister dest
-    c <- fromIntegral . fromEnum . not <$> readStatus statusC
-    let result = in1 - in2 - c
-        sign = testBit in1 31
-        difSign = sign /= testBit in2 31
+    c' <- not <$> readStatus statusC
+    let c = fromIntegral $ fromEnum c'
+        result = in2 - in1 - c
+        sign = testBit in2 31
+        difSign = sign /= testBit in1 31
     setZero result
     setSign result
-    writeStatus statusC $ in1 >= in2 + c
+    writeStatus statusC $ in2 >= in1 + c
     writeStatus statusV $ difSign && sign /= testBit result 31
     writeSafeRegister dest result
 

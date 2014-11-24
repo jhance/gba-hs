@@ -95,13 +95,22 @@ tests = testGroup "[t4] alu operations"
         ]
     , testGroup "[t4.7] sbc"
         [ t4sbc1a
-        , t4sbc2a
 
+        , t4sbc2a
         , t4sbc2b
         , t4sbc2c
         , t4sbc2d
-
         , t4sbc2e
+
+        , t4sbc3a
+        , t4sbc3b
+        , t4sbc3c
+        , t4sbc3d
+
+        , t4sbc4a
+
+        , t4sbc5a
+        , t4sbc5b
         ]
     ]
 
@@ -434,7 +443,7 @@ t4sbc1a = testProperty "[t4sbc1a] correctly sets register" $
         writeStatus statusC c
         execute $ T4 T4_SBC src dest
         result <- readSafeRegister dest
-        return $ result == getLarge n1 - getLarge n2 - fromIntegral (fromEnum (not c))
+        return $ result == getLarge n2 - getLarge n1 - fromIntegral (fromEnum (not c))
 
 t4sbc2a :: TestTree
 t4sbc2a = testProperty "[t4sbc2a] Z flag, set to 1, carry-in" $
@@ -448,8 +457,8 @@ t4sbc2a = testProperty "[t4sbc2a] Z flag, set to 1, carry-in" $
 t4sbc2b :: TestTree
 t4sbc2b = testProperty "[t4sbc2b] Z flag, set to 1, no carry-in" $
     \(n, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
-        writeSafeRegister src (getLarge n + 1)
-        writeSafeRegister dest (getLarge n)
+        writeSafeRegister src (getLarge n)
+        writeSafeRegister dest (getLarge n + 1)
         writeStatus statusC False
         execute $ T4 T4_SBC src dest
         readStatus statusZ
@@ -482,3 +491,74 @@ t4sbc2e = testProperty "[t4sbc2e] Z flag, set to 0, equal, no carry-in" $
         writeStatus statusC False
         execute $ T4 T4_SBC src dest
         not <$> readStatus statusZ
+
+t4sbc3a :: TestTree
+t4sbc3a = testCase "[t4sbc3a] C flag, set to 0" $ do
+    c <- runTest $ do
+        writeSafeRegister 0 1
+        writeSafeRegister 1 1
+        writeStatus statusC False
+        execute $ T4 T4_SBC 0 1
+        readStatus statusC
+    c @?= False
+
+t4sbc3b :: TestTree
+t4sbc3b = testCase "[t4sbc3b] C flag, set to 1" $ do
+    c <- runTest $ do
+        writeSafeRegister 0 1
+        writeSafeRegister 1 1
+        writeStatus statusC True
+        execute $ T4 T4_SBC 0 1
+        readStatus statusC
+    c @?= True
+
+t4sbc3c :: TestTree
+t4sbc3c = testCase "[t4sbc3c] C flag, set to 0, with dest = 0" $ do
+    c <- runTest $ do
+        writeSafeRegister 0 0
+        writeSafeRegister 1 0
+        writeStatus statusC False
+        execute $ T4 T4_SBC 0 1
+        readStatus statusC
+    c @?= False
+
+t4sbc3d :: TestTree
+t4sbc3d = testCase "[t4sbc3d] C flag, set to 1, with dest = 0" $ do
+    c <- runTest $ do
+        writeSafeRegister 0 0
+        writeSafeRegister 1 0
+        writeStatus statusC True
+        execute $ T4 T4_SBC 0 1
+        readStatus statusC
+    c @?= True
+
+t4sbc4a :: TestTree
+t4sbc4a = testProperty "[t4sbc4a] N flag" $
+    \(n1, n2, c, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src (getLarge n1)
+        writeSafeRegister dest (getLarge n2)
+        writeStatus statusC c
+        execute $ T4 T4_SBC src dest
+        res <- readSafeRegister dest
+        n <- readStatus statusN
+        return $ n == testBit res 31
+
+t4sbc5a :: TestTree
+t4sbc5a = testCase "[t4sbc5a] V flag, set to 0" $ do
+    v <- runTest $ do
+        writeSafeRegister 0 1
+        writeSafeRegister 1 [b|10000000 00000000 00000000 00000001|]
+        writeStatus statusC True
+        execute $ T4 T4_SBC 0 1
+        readStatus statusV
+    v @?= False
+
+t4sbc5b :: TestTree
+t4sbc5b = testCase "[t4sbc5b] V flag, set to 1" $ do
+    v <- runTest $ do
+        writeSafeRegister 0 1
+        writeSafeRegister 1 [b|10000000 00000000 00000000 00000001|]
+        writeStatus statusC False
+        execute $ T4 T4_SBC 0 1
+        readStatus statusV
+    v @?= True
