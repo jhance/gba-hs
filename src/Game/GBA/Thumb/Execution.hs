@@ -150,6 +150,14 @@ executeT4 T4_SBC src dest = do
     writeStatus statusC $ in2 >= in1 + c
     writeStatus statusV $ difSign && sign /= testBit result 31
     writeSafeRegister dest result
+executeT4 T4_NEG src dest = do
+    in1 <- readSafeRegister src
+    let result = 0 - in1
+    setZero result
+    setSign result
+    writeStatus statusC $ in1 == 0
+    writeStatus statusV $ in1 == 0x80000000
+    writeSafeRegister dest result
 
 -- | Execution of any Thumb mode instruction.
 -- Please do not try to execute outside of Thumb mode.

@@ -112,6 +112,32 @@ tests = testGroup "[t4] alu operations"
         , t4sbc5a
         , t4sbc5b
         ]
+    , testGroup "[t4.8] ror"
+        [
+        ]
+    , testGroup "[t4.9] tst"
+        [
+        ]
+    , testGroup "[t4.10] neg"
+        [ t4neg1a
+        , t4neg1b
+        , t4neg1c
+
+        , t4neg2a
+        , t4neg2b
+
+        , t4neg3a
+        , t4neg3b
+
+        , t4neg4a
+        , t4neg4b
+        , t4neg4c
+        , t4neg4d
+
+        , t4neg5a
+        , t4neg5b
+        , t4neg5c
+        ]
     ]
 
 t4parser1 :: TestTree
@@ -547,7 +573,7 @@ t4sbc5a :: TestTree
 t4sbc5a = testCase "[t4sbc5a] V flag, set to 0" $ do
     v <- runTest $ do
         writeSafeRegister 0 1
-        writeSafeRegister 1 [b|10000000 00000000 00000000 00000001|]
+        writeSafeRegister 1 0x80000001
         writeStatus statusC True
         execute $ T4 T4_SBC 0 1
         readStatus statusV
@@ -557,8 +583,128 @@ t4sbc5b :: TestTree
 t4sbc5b = testCase "[t4sbc5b] V flag, set to 1" $ do
     v <- runTest $ do
         writeSafeRegister 0 1
-        writeSafeRegister 1 [b|10000000 00000000 00000000 00000001|]
+        writeSafeRegister 1 0x80000001
         writeStatus statusC False
         execute $ T4 T4_SBC 0 1
         readStatus statusV
     v @?= True
+
+t4neg1a :: TestTree
+t4neg1a = testProperty "[t4neg1a] correctly sets register" $
+    \(n1, n2, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src n1
+        writeSafeRegister dest n2
+        execute $ T4 T4_NEG src dest
+        result <- readSafeRegister dest
+        return $ result == 0 - n1
+
+t4neg1b :: TestTree
+t4neg1b = testCase "[t4neg1b] correctly sets register, src = 0" $ do
+    res <- runTest $ do
+        writeSafeRegister 0 0
+        execute $ T4 T4_NEG 0 1
+        readSafeRegister 1
+    res @?= 0
+
+t4neg1c :: TestTree
+t4neg1c = testCase "[t4neg1c] correctly sets register, src = 0x80000000" $ do
+    res <- runTest $ do
+        writeSafeRegister 0 0x80000000
+        execute $ T4 T4_NEG 0 1
+        readSafeRegister 1
+    res @?= 0x80000000
+
+t4neg2a :: TestTree
+t4neg2a = testProperty "[t4neg2a] Z flag, src /= 0" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+    src /= dest && n1 /= 0 ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_NEG src dest
+        not <$> readStatus statusZ
+
+t4neg2b :: TestTree
+t4neg2b = testCase "[t4neg2b] Z flag, src = 0" $ do
+    z <- runTest $ do
+        writeSafeRegister 0 0
+        execute $ T4 T4_NEG 0 1
+        readStatus statusZ
+    z @?= True
+
+t4neg3a :: TestTree
+t4neg3a = testProperty "[t4neg3a] C flag, src /= 0" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+    src /= dest && n1 /= 0 ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_NEG src dest
+        not <$> readStatus statusC
+
+t4neg3b :: TestTree
+t4neg3b = testCase "[t4neg3b] C flag, src = 0" $ do
+    c <- runTest $ do
+        writeSafeRegister 0 0
+        execute $ T4 T4_NEG 0 1
+        readStatus statusC
+    c @?= True
+
+t4neg4a :: TestTree
+t4neg4a = testProperty "[t4neg4a] N flag" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+    src /= dest ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_NEG src dest
+        n <- readStatus statusN
+        return $ n == testBit (0 - getLarge n1) 31
+
+t4neg4b :: TestTree
+t4neg4b = testProperty "[t4neg4b] N flag, src /= 0, src /= 0x80000000" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+    src /= dest && n1 /= 0 && n1 /= 0x80000000 ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_NEG src dest
+        n <- readStatus statusN
+        return $ n == not (testBit (getLarge n1) 31)
+
+t4neg4c :: TestTree
+t4neg4c = testCase "[t4neg4c] N flag, src = 0" $ do
+    n <- runTest $ do
+        writeSafeRegister 0 0
+        execute $ T4 T4_NEG 0 1
+        readStatus statusN
+    n @?= False
+
+t4neg4d :: TestTree
+t4neg4d = testCase "[t4neg4d] N flag, src = 0x80000000" $ do
+    n <- runTest $ do
+        writeSafeRegister 0 0x80000000
+        execute $ T4 T4_NEG 0 1
+        readStatus statusN
+    n @?= True
+
+t4neg5a :: TestTree
+t4neg5a = testProperty "[t4neg5a] V flag, src /= 0x80000000" $
+  \(n1, n2, ThumbRegister src, ThumbRegister dest) ->
+     src /= dest && n1 /= 0x80000000 ==> runPure $ do
+         writeSafeRegister src $ getLarge n1
+         writeSafeRegister dest $ getLarge n2
+         execute $ T4 T4_NEG src dest
+         not <$> readStatus statusV
+
+t4neg5b :: TestTree
+t4neg5b = testCase "[t4neg5b] V flag, src = 0x80000000" $ do
+    v <- runTest $ do
+        writeSafeRegister 0 0x80000000
+        execute $ T4 T4_NEG 0 1
+        readStatus statusV
+    v @?= True
+
+t4neg5c :: TestTree
+t4neg5c = testCase "[t4neg5c] V flag, src = 0x80000001" $ do
+    v <- runTest $ do
+        writeSafeRegister 0 0x80000001
+        execute $ T4 T4_NEG 0 1
+        readStatus statusV
+    v @?= False
