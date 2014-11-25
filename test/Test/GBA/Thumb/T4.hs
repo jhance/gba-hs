@@ -118,7 +118,7 @@ tests = testGroup "[t4] alu operations"
     , testGroup "[t4.9] tst"
         [
         ]
-    , testGroup "[t4.10] neg"
+    , testGroup "[t4.a] neg"
         [ t4neg1a
         , t4neg1b
         , t4neg1c
