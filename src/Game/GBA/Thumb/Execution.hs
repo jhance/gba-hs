@@ -151,21 +151,6 @@ executeT4 T4_ASR src dest = do
                 writeStatus statusN True
                 writeSafeRegister dest 0xFFFFFFFF
     else executeT1 T1_ASR (fromIntegral sa) dest dest
-executeT4 T4_ROR src dest = do
-    sa <- (.&. 0xFF) <$> readSafeRegister src
-    cur <- readSafeRegister dest
-    if sa == 0 then do
-        setZero cur
-        setSign cur
-    else do
-        let sa' = fromIntegral $ sa `rem` 32
-            sa'' = if sa'' == 0 then 32 else sa''
-        cur <- readSafeRegister dest
-        let result = cur `rotateR` sa'
-        setZero result
-        setSign result
-        writeStatus statusC $ testBit result (sa'' - 1)
-        writeSafeRegister dest result
 executeT4 T4_ADC src dest = do
     in1 <- readSafeRegister src
     in2 <- readSafeRegister dest
@@ -191,6 +176,27 @@ executeT4 T4_SBC src dest = do
     writeStatus statusC $ in2 >= in1 + c
     writeStatus statusV $ difSign && sign /= testBit result 31
     writeSafeRegister dest result
+executeT4 T4_ROR src dest = do
+    sa <- (.&. 0xFF) <$> readSafeRegister src
+    cur <- readSafeRegister dest
+    if sa == 0 then do
+        setZero cur
+        setSign cur
+    else do
+        let sa' = fromIntegral $ sa `rem` 32
+            sa'' = if sa'' == 0 then 32 else sa''
+        cur <- readSafeRegister dest
+        let result = cur `rotateR` sa'
+        setZero result
+        setSign result
+        writeStatus statusC $ testBit result (sa'' - 1)
+        writeSafeRegister dest result
+executeT4 T4_TST src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    let result = in1 .&. in2
+    setZero result
+    setSign result
 executeT4 T4_NEG src dest = do
     in1 <- readSafeRegister src
     let result = 0 - in1

@@ -116,7 +116,11 @@ tests = testGroup "[t4] alu operations"
         [
         ]
     , testGroup "[t4.9] tst"
-        [
+        [ t4tst1a
+
+        , t4tst2a
+
+        , t4tst3a
         ]
     , testGroup "[t4.a] neg"
         [ t4neg1a
@@ -611,6 +615,33 @@ t4sbc5b = testCase "[t4sbc5b] V flag, set to 1" $ do
         execute $ T4 T4_SBC 0 1
         readStatus statusV
     v @?= True
+
+t4tst1a :: TestTree
+t4tst1a = testProperty "[t4tst1a] does not change register" $ do
+    \(n1, n2, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_TST src dest
+        result <- readSafeRegister dest
+        return $ result == getLarge n2
+
+t4tst2a :: TestTree
+t4tst2a = testProperty "[t4tst2a] Z flag" $ do
+    \(n1, n2, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_TST src dest
+        z <- readStatus statusZ
+        return $ z == (getLarge n1 .&. getLarge n2 == 0)
+
+t4tst3a :: TestTree
+t4tst3a = testProperty "[t4tst3a] N flag" $ do
+    \(n1, n2, ThumbRegister src, ThumbRegister dest) -> src /= dest ==> runPure $ do
+        writeSafeRegister src $ getLarge n1
+        writeSafeRegister dest $ getLarge n2
+        execute $ T4 T4_TST src dest
+        n <- readStatus statusN
+        return $ n == testBit (getLarge n1 .&. getLarge n2) 31
 
 t4neg1a :: TestTree
 t4neg1a = testProperty "[t4neg1a] correctly sets register" $
