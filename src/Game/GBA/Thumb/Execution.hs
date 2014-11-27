@@ -19,23 +19,21 @@ setSign val = writeStatus statusN $ testBit val 31
 -- t1
 -----
 executeT1 :: T1Opcode -> Word8 -> RegisterID -> RegisterID -> GBA s ()
-executeT1 T1_LSL 0 src dest = do
+executeT1 _ 0 src dest = do
     val <- readSafeRegister src
     writeSafeRegister dest val
     setSign val
     setZero val
-
-executeT1 _ 0 _ _ = error "invalid t1; should through exception!"
 executeT1 T1_LSL n src dest = do
     val <- readSafeRegister src
-    let val' = shiftL val (fromIntegral n)
+    let val' = unsafeShiftL val (fromIntegral n)
     writeSafeRegister dest val'
-    writeStatus statusC $ testBit val 31
+    writeStatus statusC $ testBit val (32 - fromIntegral n)
     setZero val'
     setSign val'
 executeT1 T1_LSR n src dest = do
     val <- readRegister src
-    let val' = shiftR val (fromIntegral n)
+    let val' = unsafeShiftR val (fromIntegral n)
     writeRegister dest val'
     writeStatus statusC $ testBit val (fromIntegral n - 1)
     setZero val'
@@ -43,10 +41,10 @@ executeT1 T1_LSR n src dest = do
 executeT1 T1_ASR n src dest = do
     let n' = fromIntegral n
     val <- readRegister src
-    let val' = shiftR val n'
+    let val' = unsafeShiftR val n'
         val'' = if testBit val 31
                     -- set left-most n bits to 1
-                    then shiftL (complement 0) (32 - n') + val'
+                    then unsafeShiftL (complement 0) (32 - n') + val'
                     else val'
     writeRegister dest val''
     writeStatus statusC $ testBit val (n' - 1)
@@ -125,6 +123,49 @@ executeT4 T4_EOR src dest = do
     setZero result
     setSign result
     writeSafeRegister dest result
+executeT4 T4_LSL src dest = do
+    sa <- (.&. 0xFF) <$> readSafeRegister src
+    if sa > 32 then do
+        writeStatus statusZ True
+        writeStatus statusN False
+        writeSafeRegister dest 0
+    else executeT1 T1_LSL (fromIntegral sa) dest dest
+executeT4 T4_LSR src dest = do
+    sa <- (.&. 0xFF) <$> readSafeRegister src
+    if sa > 32 then do
+        writeStatus statusZ True
+        writeStatus statusN False
+        writeSafeRegister dest 0
+    else executeT1 T1_LSR (fromIntegral sa) dest dest
+executeT4 T4_ASR src dest = do
+    sa <- (.&. 0xFF) <$> readSafeRegister src
+    if sa > 32 then do
+        cur <- readSafeRegister dest
+        if testBit cur 31
+            then do
+                writeStatus statusZ True
+                writeStatus statusN False
+                writeSafeRegister dest 0
+            else do
+                writeStatus statusZ False
+                writeStatus statusN True
+                writeSafeRegister dest 0xFFFFFFFF
+    else executeT1 T1_ASR (fromIntegral sa) dest dest
+executeT4 T4_ROR src dest = do
+    sa <- (.&. 0xFF) <$> readSafeRegister src
+    cur <- readSafeRegister dest
+    if sa == 0 then do
+        setZero cur
+        setSign cur
+    else do
+        let sa' = fromIntegral $ sa `rem` 32
+            sa'' = if sa'' == 0 then 32 else sa''
+        cur <- readSafeRegister dest
+        let result = cur `rotateR` sa'
+        setZero result
+        setSign result
+        writeStatus statusC $ testBit result (sa'' - 1)
+        writeSafeRegister dest result
 executeT4 T4_ADC src dest = do
     in1 <- readSafeRegister src
     in2 <- readSafeRegister dest
@@ -158,10 +199,34 @@ executeT4 T4_NEG src dest = do
     writeStatus statusC $ in1 == 0
     writeStatus statusV $ in1 == 0x80000000
     writeSafeRegister dest result
+executeT4 T4_CMP src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    let result = in2 - in1
+        sign = testBit in2 31
+        difSign = sign /= testBit in1 31
+    setZero result
+    setSign result
+    writeStatus statusC $ in2 >= in1
+    writeStatus statusV $ difSign && sign /= testBit result 31
+executeT4 T4_CMN src dest = do
+    in1 <- readSafeRegister src
+    in2 <- readSafeRegister dest
+    let result = in2 + in1
+        sign = testBit in2 31
+        sameSign = sign == testBit in1 31
+    setZero result
+    setSign result
+    writeStatus statusC $ result <= in2
+    writeStatus statusV $ sameSign && sign /= testBit result 31
 
 -- | Execution of any Thumb mode instruction.
 -- Please do not try to execute outside of Thumb mode.
 -- There is no check.
+--
+-- Execution on an invalid instruction might succeed!! It is expected
+-- that any instruction passed in is valid. They should be rejected
+-- by the parser, not the execution engine!
 execute :: TInstruction -> GBA s ()
 execute (T1 opcode offset src dest) =
     executeT1 opcode offset src dest
