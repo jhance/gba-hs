@@ -11,6 +11,7 @@ module Game.GBA.Thumb.Instruction
     , T2Operation(..)
     , T3Opcode(..)
     , T4Opcode(..)
+    , T5Opcode(..)
     )
 where
 
@@ -63,6 +64,11 @@ data T4Opcode = T4_AND
                 | T4_MVN
                 deriving (Enum, Show, Read, Eq, Ord)
 
+data T5Opcode = T5_ADD
+              | T5_CMP
+              | T5_MOV
+              deriving (Enum, Show, Read, Eq, Ord)
+
 -- | Thumb instructions.
 -- This is an intermediate format - only used right before execution.
 -- For this reason, we aren't compact - we use @Int@ for register ids.
@@ -82,10 +88,17 @@ data TInstruction =
         T3Opcode -- Opcode, one of MOV, CMP, ADD, SUB (2 bits)
         {-# UNPACK #-} !RegisterID -- Destination register
         {-# UNPACK #-} !Word32 -- Unsigned immediate (8 bits)
-    | T4
+    | T4 -- ALU operations
         T4Opcode -- Opcode. Many options. (4 bits)
         {-# UNPACK #-} !RegisterID -- Source register
         {-# UNPACK #-} !RegisterID -- Destination register
+    | T5 -- High-register arithmetic.
+        T5Opcode -- Opcode. Add/cmp/mov.
+        {-# UNPACK #-} !RegisterID -- Source register
+        {-# UNPACK #-} !RegisterID -- Destination register
+    | T6 -- Branch-exchange (no BLX, not supported by ARM7)
+        {-# UNPACK #-} !RegisterID -- Source register (contains jump loc)
+
     deriving (Show, Read, Eq, Ord)
 
 chop x t = shiftR (shiftL x t) t
@@ -127,16 +140,18 @@ choiceTry = choice . map try
 -- | Parses a 16-bit thumb instruction, but does not execute.
 --
 -- If it fails to parse, it will error. Really it should through an exception, though.
-parseT :: Word16 -> TInstruction
-parseT inst = fromMaybe (error "Failed to parse instruction") . runParser inst $ choiceTry
-    [ parse0
-    , parse1
+parseT :: Word16 -> Maybe TInstruction
+parseT inst = runParser inst $ choiceTry
+    [ parse1
     , parse2
     , parse3
+    , parse4
+    , parse5
+    , parse6
     ]
 
-parse0 :: Parser TInstruction
-parse0 = do
+parse1 :: Parser TInstruction
+parse1 = do
     require 3 [b|000|] 
     opcode <- getBits 2
     guard $ opcode /= [b|11|]
@@ -149,8 +164,8 @@ parse0 = do
             else offset
     return $ T1 opcode' offset' source dest
 
-parse1 :: Parser TInstruction
-parse1 = do
+parse2 :: Parser TInstruction
+parse2 = do
     require 5 [b|00011|]
     isImmediate <- toEnum <$> getBits 1
     isSub <- toEnum <$> getBits 1
@@ -159,18 +174,34 @@ parse1 = do
     dest <- getBits 3
     return $ T2 isImmediate isSub operand source dest
 
-parse2 :: Parser TInstruction
-parse2 = do
+parse3 :: Parser TInstruction
+parse3 = do
     require 3 [b|001|]
     opcode <- toEnum <$> getBits 2
     dest <- getBits 3
     operand <- getBits 8
     return $ T3 opcode dest operand
 
-parse3 :: Parser TInstruction
-parse3 = do
+parse4 :: Parser TInstruction
+parse4 = do
     require 6 [b|010000|]
     opcode <- toEnum <$> getBits 4
     source <- getBits 3
     dest <- getBits 3
     return $ T4 opcode source dest
+
+parse5 :: Parser TInstruction
+parse5 = do
+    require 6 [b|010001|]
+    opcode <- getBits 2
+    guard $ opcode /= 3
+    let opcode' = toEnum opcode
+    dmsb <- getBits 1
+    src <- getBits 4
+    dest <- getBits 3
+    return $ T5 opcode' src (dest + 8 * dmsb)
+
+parse6 :: Parser TInstruction
+parse6 = do
+    require 9 [b|010001110|]
+    T6 <$> getBits 4

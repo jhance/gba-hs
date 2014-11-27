@@ -62,27 +62,27 @@ tests = testGroup "[t1] shift register"
 
 shiftRegParse1 :: TestTree
 shiftRegParse1 = testCase "shift register lsl" $ parseT [b|000 00 00101 010 111|]
-    @?= T1 T1_LSL [b|00101|] [b|010|] [b|111|]
+    @?= Just (T1 T1_LSL [b|00101|] [b|010|] [b|111|])
 
 shiftRegParse2 :: TestTree
 shiftRegParse2 = testCase "shift register lsr" $ parseT [b|000 01 11010 000 001|]
-    @?= T1 T1_LSR [b|11010|] [b|000|] [b|001|]
+    @?= Just (T1 T1_LSR [b|11010|] [b|000|] [b|001|])
 
 shiftRegParse3 :: TestTree
 shiftRegParse3 = testCase "shift register asr" $ parseT [b|000 10 11111 101 000|]
-    @?= T1 T1_ASR [b|11111|] [b|101|] [b|000|]
+    @?= Just (T1 T1_ASR [b|11111|] [b|101|] [b|000|])
 
 shiftRegParse4 :: TestTree
 shiftRegParse4 = testCase "shift register lsl 0 -> 0" $ parseT [b|000 00 00000 010 111|]
-    @?= T1 T1_LSL [b|00000|] [b|010|] [b|111|]
+    @?= Just (T1 T1_LSL [b|00000|] [b|010|] [b|111|])
 
 shiftRegParse5 :: TestTree
 shiftRegParse5 = testCase "shift register lsr 0 -> 32" $ parseT [b|000 01 00000 000 001|]
-    @?= T1 T1_LSR [b|100000|] [b|000|] [b|001|]
+    @?= Just (T1 T1_LSR [b|100000|] [b|000|] [b|001|])
 
 shiftRegParse6 :: TestTree
 shiftRegParse6 = testCase "shift register asr 0 -> 32" $ parseT [b|000 10 00000 101 000|]
-    @?= T1 T1_ASR [b|100000|] [b|101|] [b|000|]
+    @?= Just (T1 T1_ASR [b|100000|] [b|101|] [b|000|])
 
 -- t1.1
 -------

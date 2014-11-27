@@ -169,67 +169,67 @@ tests = testGroup "[t4] alu operations"
 
 t4parser1 :: TestTree
 t4parser1 = testCase "[t4parser1] and" $ parseT [b|010000 0000 010 100|]
-    @?= T4 T4_AND [b|010|] [b|100|]
+    @?= Just (T4 T4_AND [b|010|] [b|100|])
 
 t4parser2 :: TestTree
 t4parser2 = testCase "[t4parser2] eor" $ parseT [b|010000 0001 010 100|]
-    @?= T4 T4_EOR [b|010|] [b|100|]
+    @?= Just (T4 T4_EOR [b|010|] [b|100|])
 
 t4parser3 :: TestTree
 t4parser3 = testCase "[t4parser3] lsl" $ parseT [b|010000 0010 010 100|]
-    @?= T4 T4_LSL [b|010|] [b|100|]
+    @?= Just (T4 T4_LSL [b|010|] [b|100|])
 
 t4parser4 :: TestTree
 t4parser4 = testCase "[t4parser4] lsr" $ parseT [b|010000 0011 010 100|]
-    @?= T4 T4_LSR [b|010|] [b|100|]
+    @?= Just (T4 T4_LSR [b|010|] [b|100|])
 
 t4parser5 :: TestTree
 t4parser5 = testCase "[t4parser5] asr" $ parseT [b|010000 0100 011 101|]
-    @?= T4 T4_ASR [b|011|] [b|101|]
+    @?= Just (T4 T4_ASR [b|011|] [b|101|])
 
 t4parser6 :: TestTree
 t4parser6 = testCase "[t4parser6] adc" $ parseT [b|010000 0101 011 101|]
-    @?= T4 T4_ADC [b|011|] [b|101|]
+    @?= Just (T4 T4_ADC [b|011|] [b|101|])
 
 t4parser7 :: TestTree
 t4parser7 = testCase "[t4parser7] sbc" $ parseT [b|010000 0110 011 101|]
-    @?= T4 T4_SBC [b|011|] [b|101|]
+    @?= Just (T4 T4_SBC [b|011|] [b|101|])
 
 t4parser8 :: TestTree
 t4parser8 = testCase "[t4parser8] ror" $ parseT [b|010000 0111 011 101|]
-    @?= T4 T4_ROR [b|011|] [b|101|]
+    @?= Just (T4 T4_ROR [b|011|] [b|101|])
 
 t4parser9 :: TestTree
 t4parser9 = testCase "[t4parser9] tst" $ parseT [b|010000 1000 011 101|]
-    @?= T4 T4_TST [b|011|] [b|101|]
+    @?= Just (T4 T4_TST [b|011|] [b|101|])
 
 t4parser10 :: TestTree
 t4parser10 = testCase "[t4parser10] neg" $ parseT [b|010000 1001 011 101|]
-    @?= T4 T4_NEG [b|011|] [b|101|]
+    @?= Just (T4 T4_NEG [b|011|] [b|101|])
 
 t4parser11 :: TestTree
 t4parser11 = testCase "[t4parser11] sbc" $ parseT [b|010000 1010 011 101|]
-    @?= T4 T4_CMP [b|011|] [b|101|]
+    @?= Just (T4 T4_CMP [b|011|] [b|101|])
 
 t4parser12 :: TestTree
 t4parser12 = testCase "[t4parser12] ror" $ parseT [b|010000 1011 011 101|]
-    @?= T4 T4_CMN [b|011|] [b|101|]
+    @?= Just (T4 T4_CMN [b|011|] [b|101|])
 
 t4parser13 :: TestTree
 t4parser13 = testCase "[t4parser13] orr" $ parseT [b|010000 1100 011 101|]
-    @?= T4 T4_ORR [b|011|] [b|101|]
+    @?= Just (T4 T4_ORR [b|011|] [b|101|])
 
 t4parser14 :: TestTree
 t4parser14 = testCase "[t4parser14] mul" $ parseT [b|010000 1101 011 101|]
-    @?= T4 T4_MUL [b|011|] [b|101|]
+    @?= Just (T4 T4_MUL [b|011|] [b|101|])
 
 t4parser15 :: TestTree
 t4parser15 = testCase "[t4parser15] bic" $ parseT [b|010000 1110 011 101|]
-    @?= T4 T4_BIC [b|011|] [b|101|]
+    @?= Just (T4 T4_BIC [b|011|] [b|101|])
 
 t4parser16 :: TestTree
 t4parser16 = testCase "[t4parser16] mvn" $ parseT [b|010000 1111 011 101|]
-    @?= T4 T4_MVN [b|011|] [b|101|]
+    @?= Just (T4 T4_MVN [b|011|] [b|101|])
 
 -- t4.1
 -------

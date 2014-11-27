@@ -74,19 +74,19 @@ tests = testGroup "[t3] mov, cmp, add, sub"
 
 t3parser1 :: TestTree
 t3parser1 = testCase "move immediate" $ parseT [b|001 00 010 00000011|]
-    @?= T3 T3_MOV [b|010|] [b|00000011|]
+    @?= Just (T3 T3_MOV [b|010|] [b|00000011|])
 
 t3parser2 :: TestTree
 t3parser2 = testCase "cmp immediate" $ parseT [b|001 01 011 11111111|]
-    @?= T3 T3_CMP [b|011|] [b|11111111|]
+    @?= Just (T3 T3_CMP [b|011|] [b|11111111|])
 
 t3parser3 :: TestTree
 t3parser3 = testCase "add immediate" $ parseT [b|001 10 000 10101010|]
-    @?= T3 T3_ADD [b|000|] [b|10101010|]
+    @?= Just (T3 T3_ADD [b|000|] [b|10101010|])
 
 t3parser4 :: TestTree
 t3parser4 = testCase "subtract immediate" $ parseT [b|001 11 111 10000101|]
-    @?= T3 T3_SUB [b|111|] [b|10000101|]
+    @?= Just (T3 T3_SUB [b|111|] [b|10000101|])
 
 -- t3.1
 -------

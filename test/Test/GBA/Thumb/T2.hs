@@ -47,19 +47,19 @@ tests = testGroup "[t2] add/sub literal or register"
     ]
 tasParser1 :: TestTree
 tasParser1 = testCase "add register" $ parseT [b|00011 00 010 111 001|]
-    @?= T2 T2_REG T2_ADD [b|010|] [b|111|] [b|001|]
+    @?= Just (T2 T2_REG T2_ADD [b|010|] [b|111|] [b|001|])
 
 tasParser2 :: TestTree
 tasParser2 = testCase "subtract register" $ parseT [b|00011 01 111 000 101|]
-    @?= T2 T2_REG T2_SUB [b|111|] [b|000|] [b|101|]
+    @?= Just (T2 T2_REG T2_SUB [b|111|] [b|000|] [b|101|])
 
 tasParser3 :: TestTree
 tasParser3 = testCase "add immediate" $ parseT [b|00011 10 001 000 010|]
-    @?= T2 T2_NUM T2_ADD [b|001|] [b|000|] [b|010|]
+    @?= Just (T2 T2_NUM T2_ADD [b|001|] [b|000|] [b|010|])
 
 tasParser4 :: TestTree
 tasParser4 = testCase "subtract immediate" $ parseT [b|00011 11 010 111 011|]
-    @?= T2 T2_NUM T2_SUB [b|010|] [b|111|] [b|011|]
+    @?= Just (T2 T2_NUM T2_SUB [b|010|] [b|111|] [b|011|])
 
 -- t2.1
 -------
