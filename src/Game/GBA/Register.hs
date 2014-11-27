@@ -16,6 +16,10 @@ module Game.GBA.Register
     , readStatus
     , writeStatus
     , currentBankMode
+    -- * Special registers
+    , programCounter
+    , stackPointer
+    , linkRegister
     )
 where
 

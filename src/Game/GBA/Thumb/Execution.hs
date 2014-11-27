@@ -16,6 +16,10 @@ setZero val = writeStatus statusZ $ val == 0
 setSign :: Word32 -> GBA s ()
 setSign val = writeStatus statusN $ testBit val 31
 
+-- | Jump to the next 16-bit instruction.
+nextInstruction :: GBA s Word32
+nextInstruction = (+2) <$> readSafeRegister programCounter
+
 -- t1
 -----
 executeT1 :: T1Opcode -> Word8 -> RegisterID -> RegisterID -> GBA s ()
@@ -227,18 +231,22 @@ executeT4 T4_CMN src dest = do
     writeStatus statusV $ sameSign && sign /= testBit result 31
 
 -- | Execution of any Thumb mode instruction.
--- Please do not try to execute outside of Thumb mode.
--- There is no check.
 --
 -- Execution on an invalid instruction might succeed!! It is expected
 -- that any instruction passed in is valid. They should be rejected
 -- by the parser, not the execution engine!
+--
+-- Also updates the program counter. If you don't wish to update
+-- the program counter, use @execute'@ instead.
 execute :: TInstruction -> GBA s ()
-execute (T1 opcode offset src dest) =
-    executeT1 opcode offset src dest
-execute (T2 srcType opType operand source dest) =
-    executeT2 srcType opType operand source dest
-execute (T3 opcode dest num) =
-    executeT3 opcode dest num
-execute (T4 opcode src dest) =
-    executeT4 opcode src dest
+execute inst = execute' inst >>= writeSafeRegister programCounter
+
+execute' :: TInstruction -> GBA s Word32
+execute' (T1 opcode offset src dest) =
+    executeT1 opcode offset src dest >> nextInstruction
+execute' (T2 srcType opType operand source dest) =
+    executeT2 srcType opType operand source dest >> nextInstruction
+execute' (T3 opcode dest num) =
+    executeT3 opcode dest num >> nextInstruction
+execute' (T4 opcode src dest) =
+    executeT4 opcode src dest >> nextInstruction
